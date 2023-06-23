@@ -41,7 +41,6 @@ const Home: NextPage = () => {
             name="viewport"
             content="width=device-width, initial-scale=1.0"
           />
-        <link rel="icon" href="https://twitchplays.greasygang.co/favicon.ico" />
         </Head>
       </>
     );
@@ -56,7 +55,6 @@ const Home: NextPage = () => {
         />
         <meta name="theme-color" content="#794ec4" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="icon" href="https://twitchplays.greasygang.co/favicon.ico" />
       </Head>
       <style jsx global>{`
         #_app {
