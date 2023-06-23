@@ -12,7 +12,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       res.status(400).json({ message: "Invalid JSON data" });
       return;
     } else {
-      cache.set("twitchplays", req.body, 1600);
+      cache.set("twitchplays", req.body, 80);
       res
         .status(200)
         .json({ message: "TwitchPlays inputs successfully received" });
