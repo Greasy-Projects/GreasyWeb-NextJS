@@ -1,8 +1,12 @@
 import { z } from "zod";
 
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import {
+  createTRPCRouter,
+  publicProcedure,
+  protectedProcedure,
+} from "~/server/api/trpc";
 import { cache } from "~/utils/api";
-
+import crypto from "crypto";
 export type ServerData = {
   name: string;
   inputs: [string];
@@ -19,7 +23,40 @@ export const twitchplays = createTRPCRouter({
       return "received cruncher";
     }),
 
-  get: publicProcedure.query(() => {
-    return cache.get("twitchplays");
+  get: publicProcedure
+    .input(
+      z.object({
+        streamer: z.string(),
+      })
+    )
+    .query(({ input }) => {
+      return cache.get(`twitchplays:${input.streamer}`) || null;
+    }),
+  getToken: protectedProcedure.query(async ({ ctx }) => {
+    const data = await ctx.prisma.user.findUnique({
+      where: {
+        id: ctx.session.user.id,
+      },
+      select: {
+        TPToken: true,
+      },
+    });
+    return data?.TPToken;
+  }),
+  resetToken: protectedProcedure.mutation(async ({ ctx }) => {
+    const hash = crypto.createHash("sha256");
+    hash.update(ctx.session.user.id);
+    hash.update(String(Date.now()));
+    await ctx.prisma.user.update({
+      where: {
+        id: ctx.session.user.id,
+      },
+      data: {
+        TPToken: hash.digest("hex"),
+      },
+      select: {
+        id: true,
+      },
+    });
   }),
 });

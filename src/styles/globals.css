@@ -22,3 +22,10 @@
     border-radius: 10px;
     border: -3px none #ffffff;
 }
+
+.twitchplays_card {
+    background: rgba(122, 61, 212, 0.06);
+    border-radius: 16px;
+    box-shadow: 0 4px 30px 10px rgba(0, 0, 0, 0.045);
+    border: 1px solid rgba(122, 61, 212, 0.33);
+}

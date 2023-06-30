@@ -1,18 +1,23 @@
 import { type NextPage } from "next";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { api } from "~/utils/api";
 import { Inter } from "next/font/google";
 import { useRef, useEffect } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
+interface Data {
+  name: string;
+  inputs: string[];
+}
 const Home: NextPage = () => {
-  interface Data {
-    name: string;
-    inputs: string[];
-  }
+  const router = useRouter();
+  const streamer = router.query.streamer;
 
-  const { data, refetch, remove } = api.twitchplays.get.useQuery<Data[]>();
+  const { data, refetch, remove } = api.twitchplays.get.useQuery<Data[]>({
+    streamer: String(streamer),
+  });
   const inputsRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     setInterval(() => {
@@ -26,24 +31,24 @@ const Home: NextPage = () => {
     }, 10000); // Fetch every 10 seconds (10000 milliseconds)
   }, [refetch, remove]);
 
-  if (!data)
-    return (
-      <>
-        {" "}
-        <Head>
-          <title>TwitchPlays</title>
-          <meta
-            property="og:title"
-            content="Not streaming TwitchPlays at the moment."
-          />
-          <meta name="theme-color" content="#794ec4" />
-          <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1.0"
-          />
-        </Head>
-      </>
-    );
+  // if (!data)
+  //   return (
+  //     <>
+  //       {" "}
+  //       <Head>
+  //         <title>TwitchPlays</title>
+  //         <meta
+  //           property="og:title"
+  //           content="Not streaming TwitchPlays at the moment."
+  //         />
+  //         <meta name="theme-color" content="#794ec4" />
+  //         <meta
+  //           name="viewport"
+  //           content="width=device-width, initial-scale=1.0"
+  //         />
+  //       </Head>
+  //     </>
+  //   );
   return (
     <>
       <Head>
