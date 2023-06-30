@@ -1,11 +1,9 @@
 import { type NextPage } from "next";
 import Head from "next/head";
 import { api } from "~/utils/api";
-
 import { Inter } from "next/font/google";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { useRouter } from "next/router";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -147,7 +145,7 @@ const Home: NextPage = () => {
                       }}
                       className="select-none text-[clamp(0.1rem,_3.5vw,_1.2rem)] blur-sm"
                     >
-                      anAccountIdBlurPlaceholderLong
+                      5eed18200857a70d1fb267d6b0959
                     </span>
                   </div>
                   <button
