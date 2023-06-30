@@ -41,7 +41,7 @@ export const twitchplays = createTRPCRouter({
         TPToken: true,
       },
     });
-    return data?.TPToken;
+    return data?.TPToken || null;
   }),
   resetToken: protectedProcedure.mutation(async ({ ctx }) => {
     const hash = crypto.createHash("sha256");
