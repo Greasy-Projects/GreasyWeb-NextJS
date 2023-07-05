@@ -16,7 +16,7 @@ const Home: NextPage = () => {
   const streamer = router.query.streamer;
 
   const { data, refetch, remove } = api.twitchplays.get.useQuery<Data[]>({
-    streamer: String(streamer),
+    streamer: String(streamer || "greasymac"),
   });
   const inputsRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {

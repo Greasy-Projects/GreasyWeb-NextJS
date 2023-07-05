@@ -17,7 +17,7 @@ const Home: NextPage = () => {
   const utils = api.useContext();
 
   const { data } = api.twitchplays.get.useQuery<Data[]>({
-    streamer: String(streamer),
+    streamer: String(streamer || "greasymac"),
   });
 
   useEffect(() => {
