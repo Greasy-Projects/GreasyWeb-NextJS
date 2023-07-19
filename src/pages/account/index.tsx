@@ -11,12 +11,12 @@ const Home: NextPage = () => {
   const { data: session, status } = useSession();
   const utils = api.useContext();
 
+  // TwitchPlays Token
   const { data: TPToken } = api.twitchplays.getToken.useQuery();
-  const [TPTokenCopiedHidden, setTPTokenCopiedHidden] = useState(true);
+  const [TPTokenCopied, setTPTokenCopied] = useState(true);
+  const [TPTokenCopiedHidden, setTPTokenCopiedHidden] = useState(false);
   const [TPTokenResetConfirm, setTPTokenResetConfirm] = useState(false);
-  const [TPTokenResetDone, setTPTokenResetDone] = useState(0);
-  const resetTPToken = api.twitchplays.resetToken.useMutation();
-  console.log(session);
+  const TPTokenMutation = api.twitchplays.resetToken.useMutation();
   if (status !== "unauthenticated" && session) {
     return (
       <>
@@ -42,13 +42,23 @@ const Home: NextPage = () => {
             border: 1px solid rgba(122, 61, 212, 0.33);
           }
 
-          .logout_button {
+          .red_button {
             background: rgba(222, 70, 199, 0.08);
             border-radius: 0.6rem;
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(5.8px);
             -webkit-backdrop-filter: blur(5.8px);
             border: 1px solid rgba(222, 70, 199, 0.33);
+            color: #f2659b;
+          }
+          .green_button {
+            background: rgba(98, 238, 199, 0.08);
+            border-radius: 0.6rem;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5.8px);
+            -webkit-backdrop-filter: blur(5.8px);
+            border: 1px solid rgba(98, 238, 173, 0.33);
+            color: rgba(98, 238, 173);
           }
 
           #inputs h3 {
@@ -122,64 +132,84 @@ const Home: NextPage = () => {
                   <span className="align-middle text-sm normal-case"> </span>
                 </strong>
                 <div className="inline-flex">
-                  <div
-                    id="code"
-                    className="flex cursor-pointer justify-center px-2 text-lg sm:text-2xl"
-                  >
-                    <span
-                      className={
-                        TPTokenCopiedHidden
-                          ? "absolute align-middle text-purple-200 opacity-50 transition-opacity"
-                          : "absolute align-middle text-purple-300 opacity-100 transition-opacity"
-                      }
+                  {TPToken && (
+                    <div
+                      id="code"
+                      className="flex cursor-pointer justify-center px-2 text-lg sm:text-2xl"
                     >
-                      {TPTokenCopiedHidden ? "click to copy" : "copied!"}
-                    </span>
-                    <span
-                      onClick={() => {
-                        if (TPToken) {
-                          void navigator.clipboard.writeText(TPToken);
-                          setTPTokenCopiedHidden(false);
-                          setTimeout(() => setTPTokenCopiedHidden(true), 5000);
+                      <span
+                        className={
+                          (TPTokenCopiedHidden
+                            ? "hidden"
+                            : TPTokenCopied
+                            ? "opacity-50"
+                            : "opacity-100") +
+                          " absolute align-middle text-purple-300  transition-opacity"
                         }
-                      }}
-                      className="select-none text-[clamp(0.1rem,_3.5vw,_1.2rem)] blur-sm"
-                    >
-                      5eed18200857a70d1fb267d6b0959
-                    </span>
-                  </div>
+                      >
+                        {TPTokenCopied ? "click to copy" : "copied!"}
+                      </span>
+                      <span
+                        onClick={() => {
+                          if (TPToken) {
+                            void navigator.clipboard.writeText(TPToken);
+                            setTPTokenCopied(false);
+                            setTimeout(() => setTPTokenCopied(true), 5000);
+                          }
+                        }}
+                        className={
+                          (TPTokenCopiedHidden ? "text-transparent" : "") +
+                          " select-none text-[clamp(0.1rem,_3.5vw,_1.2rem)] blur-sm"
+                        }
+                      >
+                        5eed18200857a70d1fb267d6b0959
+                      </span>
+                    </div>
+                  )}
                   <button
                     onClick={() => {
-                      if (!TPTokenResetConfirm) {
+                      console.log(TPTokenResetConfirm);
+                      if (
+                        TPToken &&
+                        !TPTokenResetConfirm &&
+                        !TPTokenCopiedHidden &&
+                        !TPTokenMutation.isSuccess
+                      ) {
                         setTPTokenResetConfirm(true);
                         setTimeout(() => setTPTokenResetConfirm(false), 5000);
-                      } else if (!TPTokenResetDone) {
-                        resetTPToken.mutate();
-
-                        setTPTokenResetDone(2);
-                        setTimeout(
-                          () => {
-                            void utils.twitchplays.getToken.invalidate();
-                            setTPTokenResetDone(1);
-                          },
-
-                          1000
+                      } else if (
+                        TPTokenResetConfirm &&
+                        !TPTokenCopiedHidden &&
+                        !TPTokenMutation.isSuccess
+                      ) {
+                        setTPTokenCopiedHidden(true);
+                        void TPTokenMutation.mutateAsync().then(
+                          () =>
+                            void utils.twitchplays.getToken
+                              .invalidate()
+                              .then(() => {
+                                setTPTokenCopiedHidden(false);
+                                setTimeout(() => {
+                                  TPTokenMutation.reset();
+                                }, 10000);
+                              })
                         );
-
-                        setTimeout(() => {
-                          setTPTokenResetDone(0);
-                        }, 10000);
                       }
                     }}
-                    className="logout_button ml-2 items-center px-2 text-xs font-bold uppercase text-[#f2659b] sm:text-lg "
+                    className={
+                      (TPToken ? "red_button" : "green_button") +
+                      " ml-2 items-center px-2 text-xs font-bold uppercase sm:text-lg"
+                    }
                   >
-                    {TPTokenResetDone == 2
-                      ? "wait"
-                      : TPTokenResetDone
-                      ? "done!"
-                      : TPTokenResetConfirm
-                      ? "sure?"
-                      : "reset"}
+                    {TPToken
+                      ? TPTokenCopiedHidden
+                        ? "wait"
+                        : TPTokenMutation.isSuccess
+                        ? "done!"
+                        : TPTokenResetConfirm
+                        ? "sure?"
+                        : "reset"
+                      : "generate"}
                   </button>
                 </div>
               </div>
@@ -190,7 +220,7 @@ const Home: NextPage = () => {
                   onClick={() => {
                     void signOut();
                   }}
-                  className="logout_button ml-4 flex items-center px-2 py-2 font-bold uppercase text-[#f2659b] "
+                  className="red_button ml-4 flex items-center px-2 py-2 font-bold uppercase"
                 >
                   LOGOUT
                 </button>
@@ -233,7 +263,7 @@ const Home: NextPage = () => {
                 }}
                 className="text-md group relative flex w-full justify-center rounded-md border border-transparent bg-purple-600 px-4 py-2 font-medium tracking-tighter text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
               >
-                Login using Twitch
+                Log In
               </button>
             </div>
           </div>
