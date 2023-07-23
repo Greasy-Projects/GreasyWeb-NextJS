@@ -31,24 +31,24 @@ const Home: NextPage = () => {
     }, 10000); // Fetch every 10 seconds (10000 milliseconds)
   }, [refetch, remove]);
 
-  // if (!data)
-  //   return (
-  //     <>
-  //       {" "}
-  //       <Head>
-  //         <title>TwitchPlays</title>
-  //         <meta
-  //           property="og:title"
-  //           content="Not streaming TwitchPlays at the moment."
-  //         />
-  //         <meta name="theme-color" content="#794ec4" />
-  //         <meta
-  //           name="viewport"
-  //           content="width=device-width, initial-scale=1.0"
-  //         />
-  //       </Head>
-  //     </>
-  //   );
+  if (!data)
+    return (
+      <>
+        {" "}
+        <Head>
+          <title>TwitchPlays</title>
+          <meta
+            property="og:title"
+            content="Not streaming TwitchPlays at the moment."
+          />
+          <meta name="theme-color" content="#794ec4" />
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+          />
+        </Head>
+      </>
+    );
   return (
     <>
       <Head>

@@ -3,20 +3,13 @@ import Head from "next/head";
 import { api } from "~/utils/api";
 import { Inter } from "next/font/google";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
 const Home: NextPage = () => {
   const { data: session, status } = useSession();
-  const utils = api.useContext();
 
-  // TwitchPlays Token
-  const { data: TPToken } = api.twitchplays.getToken.useQuery();
-  const [TPTokenCopied, setTPTokenCopied] = useState(true);
-  const [TPTokenCopiedHidden, setTPTokenCopiedHidden] = useState(false);
-  const [TPTokenResetConfirm, setTPTokenResetConfirm] = useState(false);
-  const TPTokenMutation = api.twitchplays.resetToken.useMutation();
   if (status !== "unauthenticated" && session) {
     return (
       <>
@@ -122,98 +115,9 @@ const Home: NextPage = () => {
                 Account
               </h1>
               <hr className="mb-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:mb-4" />
-
-              <div
-                className="mx-3 flex flex-col flex-wrap content-center items-center"
-                id="inputs"
-              >
-                <strong>
-                  TwitchPlays Token
-                  <span className="align-middle text-sm normal-case"> </span>
-                </strong>
-                <div className="inline-flex">
-                  {TPToken && (
-                    <div
-                      id="code"
-                      className="flex cursor-pointer justify-center px-2 text-lg sm:text-2xl"
-                    >
-                      <span
-                        className={
-                          (TPTokenCopiedHidden
-                            ? "hidden"
-                            : TPTokenCopied
-                            ? "opacity-50"
-                            : "opacity-100") +
-                          " absolute align-middle text-purple-300  transition-opacity"
-                        }
-                      >
-                        {TPTokenCopied ? "click to copy" : "copied!"}
-                      </span>
-                      <span
-                        onClick={() => {
-                          if (TPToken) {
-                            void navigator.clipboard.writeText(TPToken);
-                            setTPTokenCopied(false);
-                            setTimeout(() => setTPTokenCopied(true), 5000);
-                          }
-                        }}
-                        className={
-                          (TPTokenCopiedHidden ? "text-transparent" : "") +
-                          " select-none text-[clamp(0.1rem,_3.5vw,_1.2rem)] blur-sm"
-                        }
-                      >
-                        5eed18200857a70d1fb267d6b0959
-                      </span>
-                    </div>
-                  )}
-                  <button
-                    onClick={() => {
-                      console.log(TPTokenResetConfirm);
-                      if (
-                        TPToken &&
-                        !TPTokenResetConfirm &&
-                        !TPTokenCopiedHidden &&
-                        !TPTokenMutation.isSuccess
-                      ) {
-                        setTPTokenResetConfirm(true);
-                        setTimeout(() => setTPTokenResetConfirm(false), 5000);
-                      } else if (
-                        TPTokenResetConfirm &&
-                        !TPTokenCopiedHidden &&
-                        !TPTokenMutation.isSuccess
-                      ) {
-                        setTPTokenCopiedHidden(true);
-                        void TPTokenMutation.mutateAsync().then(
-                          () =>
-                            void utils.twitchplays.getToken
-                              .invalidate()
-                              .then(() => {
-                                setTPTokenCopiedHidden(false);
-                                setTimeout(() => {
-                                  TPTokenMutation.reset();
-                                }, 10000);
-                              })
-                        );
-                      }
-                    }}
-                    className={
-                      (TPToken ? "red_button" : "green_button") +
-                      " ml-2 items-center px-2 text-xs font-bold uppercase sm:text-lg"
-                    }
-                  >
-                    {TPToken
-                      ? TPTokenCopiedHidden
-                        ? "wait"
-                        : TPTokenMutation.isSuccess
-                        ? "done!"
-                        : TPTokenResetConfirm
-                        ? "sure?"
-                        : "reset"
-                      : "generate"}
-                  </button>
-                </div>
-              </div>
-
+              <Suspense>
+                <TPTokenComponent />
+              </Suspense>
               <hr className="my-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:my-4" />
               <div className="flex flex-row gap-3">
                 <button
@@ -272,5 +176,108 @@ const Home: NextPage = () => {
     </>
   );
 };
+
+function TPTokenComponent() {
+  const { data: TPToken, isLoading } = api.twitchplays.getToken.useQuery();
+  // TwitchPlays Token
+  const utils = api.useContext();
+  const [TPTokenCopied, setTPTokenCopied] = useState(true);
+  const [TPTokenCopiedHidden, setTPTokenCopiedHidden] = useState(false);
+  const [TPTokenResetConfirm, setTPTokenResetConfirm] = useState(false);
+  const TPTokenMutation = api.twitchplays.resetToken.useMutation();
+  if (isLoading) return;
+  return (
+    <div
+      className="mx-3 flex flex-col flex-wrap content-center items-center"
+      id="inputs"
+    >
+      <strong>
+        TwitchPlays Token
+        <span className="align-middle text-sm normal-case"> </span>
+      </strong>
+
+      <div className="inline-flex">
+        {TPToken && (
+          <div
+            id="code"
+            className="flex cursor-pointer justify-center px-2 text-lg sm:text-2xl"
+          >
+            <span
+              className={
+                (TPTokenCopiedHidden
+                  ? "hidden"
+                  : TPTokenCopied
+                  ? "opacity-50"
+                  : "opacity-100") +
+                " absolute align-middle text-purple-300  transition-opacity"
+              }
+            >
+              {TPTokenCopied ? "click to copy" : "copied!"}
+            </span>
+            <span
+              onClick={() => {
+                if (TPToken) {
+                  void navigator.clipboard.writeText(TPToken);
+                  setTPTokenCopied(false);
+                  setTimeout(() => setTPTokenCopied(true), 5000);
+                }
+              }}
+              className={
+                (TPTokenCopiedHidden ? "text-transparent" : "") +
+                " select-none text-[clamp(0.1rem,_3.5vw,_1.2rem)] blur-sm"
+              }
+            >
+              5eed18200857a70d1fb267d6b0959
+            </span>
+          </div>
+        )}
+        <button
+          onClick={() => {
+            console.log(TPTokenResetConfirm);
+            if (
+              TPToken &&
+              !TPTokenResetConfirm &&
+              !TPTokenCopiedHidden &&
+              !TPTokenMutation.isSuccess
+            ) {
+              setTPTokenResetConfirm(true);
+              setTimeout(() => setTPTokenResetConfirm(false), 5000);
+            } else if (
+              (TPTokenResetConfirm &&
+                !TPTokenCopiedHidden &&
+                !TPTokenMutation.isSuccess) ||
+              !TPToken
+            ) {
+              setTPTokenCopiedHidden(true);
+              void TPTokenMutation.mutateAsync().then(
+                () =>
+                  void utils.twitchplays.getToken.invalidate().then(() => {
+                    setTPTokenCopiedHidden(false);
+                    setTimeout(() => {
+                      TPTokenMutation.reset();
+                    }, 10000);
+                  })
+              );
+            }
+          }}
+          className={
+            (TPToken ? "red_button" : "green_button") +
+            " ml-2 items-center px-2 text-xs font-bold uppercase sm:text-lg"
+          }
+        >
+          {TPToken
+            ? TPTokenCopiedHidden
+              ? "wait"
+              : TPTokenMutation.isSuccess
+              ? "done!"
+              : TPTokenResetConfirm
+              ? "sure?"
+              : "reset"
+            : "generate"}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default Home;

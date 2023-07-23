@@ -15,7 +15,7 @@ const dataSchema = z.object({
   name: z.string(),
   inputs: z.string().array(),
 });
-export const twitchplays = createTRPCRouter({
+export default createTRPCRouter({
   set: publicProcedure
     .input(z.object({ data: z.array(dataSchema) }))
     .mutation(({ input }) => {
