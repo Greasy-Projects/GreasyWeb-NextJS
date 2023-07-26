@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 import { env } from "~/env.mjs";
+import { pusher } from "~/utils/pusher";
 // Notification request headers
 const TWITCH_MESSAGE_ID = "Twitch-Eventsub-Message-Id".toLowerCase();
 const TWITCH_MESSAGE_TIMESTAMP =
@@ -28,7 +29,7 @@ interface Event {
   broadcaster_user_id: string;
   broadcaster_user_login: string;
   broadcaster_user_name: string;
-  followed_at: string;
+  total: number;
 }
 
 interface Notification {
@@ -46,14 +47,20 @@ interface Notification {
     };
     created_at: string;
   };
-  event: Event;
+  event?: Event;
 }
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log(req.method);
-
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   if (req.method === "POST") {
+    console.log(req.body);
+    if (!validateNotification(req.body as Notification))
+      return res.status(405).json({ message: "Method not allowed" });
+
     const message = getHmacMessage(req, JSON.stringify(req.body));
+    console.log(message);
     const hmac = HMAC_PREFIX + getHmac(env.TWITCH_CLIENT_SECRET, message); // Signature to compare
 
     if (verifyMessage(hmac, req.headers[TWITCH_MESSAGE_SIGNATURE] as string)) {
@@ -61,14 +68,22 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
       // Get JSON object from body, so you can process the message.
       const hook = req.body as Notification;
-      if (MESSAGE_TYPE_NOTIFICATION === req.headers[MESSAGE_TYPE]) {
+      if (
+        MESSAGE_TYPE_NOTIFICATION === req.headers[MESSAGE_TYPE] &&
+        hook.event
+      ) {
         // TODO: Do something with the event's data.
-
+        if (
+          hook.subscription.type === "channel.subscription.gift" &&
+          hook.event.total >= 5
+        ) {
+          await pusher.trigger("greasymac", "spin", { spin: true });
+        }
         console.log(`Event type: ${hook.subscription.type}`);
         console.log(`User ID: ${hook.event.user_id}`);
         console.log(`User Login: ${hook.event.user_login}`);
         console.log(`User Name: ${hook.event.user_name}`);
-        console.log(`Followed At: ${hook.event.followed_at}`);
+        console.log(`Total: ${hook.event.total}`);
         // ... more properties if needed
 
         res.send(204);
@@ -90,31 +105,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         );
       }
     } else {
-      res.send(403);
+      res.status(405).json({ message: "Method not allowed" });
     }
   } else {
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-
-    const sendData = (data: string) => {
-      res.write(`data: ${data}\n\n`);
-    };
-
-    // Simulate sending an event every 3 seconds
-    const interval = setInterval(() => {
-      const eventData = {
-        event: "custom-event",
-        data: "Hello, client!",
-      };
-      sendData(JSON.stringify(eventData));
-    }, 3000);
-
-    // Clean up on client disconnect
-    res.on("close", () => {
-      clearInterval(interval);
-      res.end();
-    });
+    res.status(405).json({ message: "Method not allowed" });
   }
 }
 
@@ -140,5 +134,64 @@ function verifyMessage(hmac: string, verifySignature: string): boolean {
   return crypto.timingSafeEqual(
     Buffer.from(hmac),
     Buffer.from(verifySignature)
+  );
+}
+function validateCondition(condition: Condition): condition is Condition {
+  return (
+    typeof condition === "object" &&
+    "broadcaster_user_id" in condition &&
+    typeof condition.broadcaster_user_id === "string"
+  );
+}
+
+function validateEvent(event: Event): event is Event {
+  return (
+    typeof event === "object" &&
+    "user_id" in event &&
+    typeof event.user_id === "string" &&
+    "user_login" in event &&
+    typeof event.user_login === "string" &&
+    "user_name" in event &&
+    typeof event.user_name === "string" &&
+    "broadcaster_user_id" in event &&
+    typeof event.broadcaster_user_id === "string" &&
+    "broadcaster_user_login" in event &&
+    typeof event.broadcaster_user_login === "string" &&
+    "broadcaster_user_name" in event &&
+    typeof event.broadcaster_user_name === "string" &&
+    typeof event.total === "number"
+  );
+}
+
+function validateNotification(
+  notification: Notification
+): notification is Notification {
+  return (
+    typeof notification === "object" &&
+    "subscription" in notification &&
+    typeof notification.subscription === "object" &&
+    "id" in notification.subscription &&
+    typeof notification.subscription.id === "string" &&
+    "status" in notification.subscription &&
+    typeof notification.subscription.status === "string" &&
+    "type" in notification.subscription &&
+    typeof notification.subscription.type === "string" &&
+    "version" in notification.subscription &&
+    typeof notification.subscription.version === "string" &&
+    "cost" in notification.subscription &&
+    typeof notification.subscription.cost === "number" &&
+    "condition" in notification.subscription &&
+    validateCondition(notification.subscription.condition) &&
+    "transport" in notification.subscription &&
+    typeof notification.subscription.transport === "object" &&
+    "method" in notification.subscription.transport &&
+    typeof notification.subscription.transport.method === "string" &&
+    "callback" in notification.subscription.transport &&
+    typeof notification.subscription.transport.callback === "string" &&
+    "created_at" in notification.subscription &&
+    typeof notification.subscription.created_at === "string" &&
+    (typeof notification.event === "undefined" ||
+      (typeof notification.event === "object" &&
+        validateEvent(notification.event)))
   );
 }

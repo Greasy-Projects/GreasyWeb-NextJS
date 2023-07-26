@@ -23,6 +23,11 @@ export const env = createEnv({
     // Add `.min(1) on ID and SECRET if you want to make sure they're not empty
     TWITCH_CLIENT_ID: z.string(),
     TWITCH_CLIENT_SECRET: z.string(),
+
+    SOKETI_URL: z.string(),
+    SOKETI_APP_ID: z.string(),
+    SOKETI_APP_KEY: z.string(),
+    SOKETI_APP_SECRET: z.string(),
   },
 
   /**
@@ -45,6 +50,10 @@ export const env = createEnv({
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     TWITCH_CLIENT_ID: process.env.TWITCH_CLIENT_ID,
     TWITCH_CLIENT_SECRET: process.env.TWITCH_CLIENT_SECRET,
+    SOKETI_URL: process.env.SOKETI_URL,
+    SOKETI_APP_ID: process.env.SOKETI_APP_ID,
+    SOKETI_APP_KEY: process.env.SOKETI_APP_KEY,
+    SOKETI_APP_SECRET: process.env.SOKETI_APP_SECRET,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation.

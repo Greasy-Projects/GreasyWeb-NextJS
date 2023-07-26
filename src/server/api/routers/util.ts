@@ -5,6 +5,7 @@ import {
   publicProcedure,
   protectedProcedure,
 } from "~/server/api/trpc";
+import { TRPCError } from "@trpc/server";
 
 export default createTRPCRouter({
   tts: publicProcedure
@@ -25,11 +26,18 @@ export default createTRPCRouter({
           voice: input.voice,
         }),
       });
-      console.log();
-      return (await res.json()) as {
-        success: boolean;
-        speak_url: string;
-      };
+      if (!res.ok) {
+        console.log(await res.json());
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Something went wrong TTS",
+        });
+      } else {
+        return (await res.json()) as {
+          success: boolean;
+          speak_url: string;
+        };
+      }
     }),
   pfp: publicProcedure
     .input(
