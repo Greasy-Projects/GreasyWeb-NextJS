@@ -9,14 +9,22 @@ const inter = Inter({ subsets: ["latin"] });
 
 const Home: NextPage = () => {
   const { data: session, status } = useSession();
+  const manualSpin = api.util.manualSpin.useMutation();
 
-  if (status !== "unauthenticated" && session) {
+  if (status !== "unauthenticated" && session != undefined) {
+    if (
+      ![
+        "clkluhxb3000483mbde5cvu43",
+        "cljq96en4000a832tm0u05xnf",
+        "cljiwel9q0000832tov52gk9g",
+      ].includes(session.user.id)
+    )
+      return "not allowed";
     return (
       <>
         <Head>
-          <title>Manage Account</title>
-          <meta property="og:title" content="Manage Account" />
-          <meta property="og:description" content="Manage your account." />
+          <title>Configure Wheel</title>
+          <meta property="og:title" content="Configure Wheel" />
           <meta name="theme-color" content="#794ec4" />
           <meta
             name="viewport"
@@ -95,44 +103,26 @@ const Home: NextPage = () => {
             display: inline-block;
             word-break: break-all;
           }
-
-          #code {
-            background: rgba(122, 70, 199, 0.08);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            border: 1px solid rgba(193, 157, 251, 0.3);
-            border-radius: 4px;
-            color: #c19dfb;
-            overflow: hidden;
-            white-space: nowrap;
-          }
         `}</style>
         <main className="flex min-h-screen justify-center bg-gradient-to-b from-[#20113f] to-[#12131c] py-14">
           <div className="container flex max-w-fit flex-col items-center justify-center px-4">
             <div className="twitchplays_card h-auto w-full rounded-xl bg-[#0d1117]/60 py-2 sm:py-4">
-              <h1 className="xs:text-5xl w-full select-none bg-gradient-to-br from-[#7d2be1] to-[#9b30ff] bg-clip-text px-5 py-2 pt-4 text-center text-[10vw] font-[900] uppercase leading-tight text-transparent sm:px-12 sm:py-8 sm:text-7xl">
+              {/* <h1 className="xs:text-5xl w-full select-none bg-gradient-to-br from-[#7d2be1] to-[#9b30ff] bg-clip-text px-5 py-2 pt-4 text-center text-[10vw] font-[900] uppercase leading-tight text-transparent sm:px-12 sm:py-8 sm:text-7xl">
                 Account
               </h1>
-              <hr className="mb-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:mb-4" />
-              {/* <Suspense>
-                <ManagersComponent />
-              </Suspense>
-              <hr className="my-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:my-4" /> */}
-              <Suspense>
-                <TPTokenComponent />
-              </Suspense>
-              <hr className="my-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:my-4" />
-              <div className="flex flex-row gap-3">
-                <button
-                  onClick={() => {
-                    void signOut();
-                  }}
-                  className="red_button ml-4 flex items-center px-2 py-2 font-bold uppercase"
-                >
-                  LOGOUT
-                </button>
-              </div>
+              <hr className="mb-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:mb-4" /> */}
+              <button
+                onClick={() => {
+                  manualSpin.mutate({
+                    streamer: "greasymac",
+                  });
+                }}
+                className={
+                  "code mx-5 items-center px-2 text-xs font-bold uppercase sm:text-lg"
+                }
+              >
+                spin
+              </button>
             </div>
           </div>
         </main>
@@ -142,9 +132,12 @@ const Home: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Account Center</title>
-        <meta property="og:title" content="Account Center" />
-        <meta property="og:description" content="Manage your account." />
+        <title>Wheel Center</title>
+        <meta property="og:title" content="Configure Wheel" />
+        <meta
+          property="og:description"
+          content="Configure your twitch wheel."
+        />
         <meta name="theme-color" content="#794ec4" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
@@ -181,30 +174,6 @@ const Home: NextPage = () => {
   );
 };
 
-function ManagersComponent() {
-  return (
-    <div
-      className="mx-3 flex flex-col flex-wrap content-center items-center"
-      id="inputs"
-    >
-      <strong>Managers</strong>
-
-      <div className="inline-flex">
-        <div
-          id="code"
-          className="flex cursor-pointer justify-center px-2 text-lg sm:text-2xl"
-        >
-          <div
-            id="code"
-            className="flex cursor-pointer justify-center px-2 text-lg sm:text-2xl"
-          >
-            manager
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 function TPTokenComponent() {
   const { data: TPToken, isLoading } = api.twitchplays.getToken.useQuery();
   // TwitchPlays Token
@@ -219,7 +188,10 @@ function TPTokenComponent() {
       className="mx-3 flex flex-col flex-wrap content-center items-center"
       id="inputs"
     >
-      <strong>TwitchPlays Token</strong>
+      <strong>
+        TwitchPlays Token
+        <span className="align-middle text-sm normal-case"> </span>
+      </strong>
 
       <div className="inline-flex">
         {TPToken && (

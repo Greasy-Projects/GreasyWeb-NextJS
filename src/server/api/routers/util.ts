@@ -6,8 +6,19 @@ import {
   protectedProcedure,
 } from "~/server/api/trpc";
 import { TRPCError } from "@trpc/server";
+import { pusher } from "~/utils/pusher";
 
 export default createTRPCRouter({
+  //TODO: secure with ctx
+  manualSpin: protectedProcedure
+    .input(
+      z.object({
+        streamer: z.string(),
+      })
+    )
+    .mutation(({ input, ctx }) => {
+      void pusher.trigger(input.streamer, "spin", { spin: true });
+    }),
   tts: publicProcedure
     .input(
       z.object({
