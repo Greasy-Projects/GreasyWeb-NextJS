@@ -75,7 +75,7 @@ export default async function handler(
         // TODO: Do something with the event's data.
         if (
           hook.subscription.type === "channel.subscription.gift" &&
-          hook.event.total >= 5
+          hook.event.total >= 3
         ) {
           await pusher.trigger("greasymac", "spin", { spin: true });
         }
