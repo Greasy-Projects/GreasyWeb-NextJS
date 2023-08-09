@@ -175,7 +175,9 @@ const Home: NextPage<{
     });
     const channel = pusher.subscribe(String(streamer));
 
-    channel.bind("spin", () => {
+    channel.bind("spin", (d: { rand: number }) => {
+      const newPrizeNumber = Math.floor(d.rand * data.length);
+      setPrizeNumber(newPrizeNumber);
       handleSpin();
     });
   });
@@ -193,8 +195,6 @@ const Home: NextPage<{
   const handleSpin = () => {
     if (!mustSpin) {
       show(true);
-      const newPrizeNumber = Math.floor(Math.random() * data.length);
-      setPrizeNumber(newPrizeNumber);
       const audioElement = document.querySelectorAll("audio");
 
       setTimeout(() => {

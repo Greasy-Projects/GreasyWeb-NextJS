@@ -17,7 +17,7 @@ export default createTRPCRouter({
       })
     )
     .mutation(({ input, ctx }) => {
-      void pusher.trigger(input.streamer, "spin", { spin: true });
+      void pusher.trigger("greasymac", "spin", { rand: Math.random() });
     }),
   tts: publicProcedure
     .input(

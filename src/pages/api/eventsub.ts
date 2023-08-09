@@ -77,7 +77,7 @@ export default async function handler(
           hook.subscription.type === "channel.subscription.gift" &&
           hook.event.total >= 3
         ) {
-          await pusher.trigger("greasymac", "spin", { spin: true });
+          await pusher.trigger("greasymac", "spin", { rand: Math.random() });
         }
         console.log(`Event type: ${hook.subscription.type}`);
         console.log(`User ID: ${hook.event.user_id}`);
