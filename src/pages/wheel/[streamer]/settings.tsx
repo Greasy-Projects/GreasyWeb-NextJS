@@ -33,7 +33,7 @@ const Home: NextPage = () => {
   } else if (session != undefined) {
     if (
       streamer.toLowerCase() !== session.user.name?.toLowerCase() &&
-      !managers?.managers.data.some(
+      !managers?.managers?.data?.some(
         (i) => i.user_name.toLowerCase() === session.user.name?.toLowerCase()
       )
     )
@@ -173,8 +173,7 @@ function ManagersComponent({
   const [managers, managersQuery] = api.util.getManagers.useSuspenseQuery({
     streamer: streamer,
   });
-  console.log(managersQuery.status);
-  if (!managers) return <></>;
+  if (!managers.managers.data) return <></>;
   streamer = streamer.toLowerCase();
   user = user.toLowerCase();
   return (
@@ -230,7 +229,7 @@ function MinimumGiftSubs({ streamer }: { streamer: string }): JSX.Element {
       minimumGiftSubs: true,
     }
   );
-  const [input, setInput] = useState(settings?.minimumGiftSubs);
+  const [input, setInput] = useState<number | null>(settings?.minimumGiftSubs);
   return (
     <div className="mx-3 flex flex-col flex-wrap content-center items-center">
       <strong>Minimum Subs</strong>
@@ -241,34 +240,44 @@ function MinimumGiftSubs({ streamer }: { streamer: string }): JSX.Element {
           </div>
         ) : (
           <input
+            id="MinimumGiftSubs"
             type="number"
             onInput={(d: ChangeEvent<HTMLInputElement>) => {
               const t = Number(d.currentTarget.value);
-              console.log(t);
               d.target.value = parseInt(d.currentTarget.value).toString();
               if (t > 10) d.target.value = "10";
-              if (t <= 0) d.target.value = "0";
-
-              setInput(parseInt(d.target.value));
+              if (t <= 0) {
+                setInput(null);
+                d.target.value = "null";
+              } else setInput(parseInt(d.target.value));
             }}
-            // defaultValue={String(settings?.minimumGiftSubs)}
             placeholder={String(settings?.minimumGiftSubs)}
             className="code mx-2 w-fit max-w-[5rem] pl-1 sm:pl-2"
           />
         )}
         <button
           onClick={() => {
-            if (input == settings?.minimumGiftSubs || input === 0) return;
+            if (
+              input == settings?.minimumGiftSubs ||
+              input == 0 ||
+              input === null
+            )
+              return;
             void MinimumGiftSubsMutation.mutateAsync({
               streamer: streamer,
               new: input,
             }).then(() => {
               MinimumGiftSubsMutation.reset();
-              void MinimumGiftSubsQuery.refetch();
+              void MinimumGiftSubsQuery.refetch().then(() => {
+                const input = document.getElementById(
+                  "MinimumGiftSubs"
+                ) as HTMLInputElement | null;
+                if (input != null && input.value) input.value = "null";
+              });
             });
           }}
           className={
-            (input == settings?.minimumGiftSubs || input === 0
+            (input == settings?.minimumGiftSubs || input === 0 || input === null
               ? "cursor-not-allowed opacity-50"
               : "") +
             (input === 0 ? " red" : " green") +
