@@ -3,7 +3,7 @@ import { prisma } from "~/server/db";
 
 export async function isManager(
   streamer: string,
-  potentialManager: string
+  potentialManager: string | null | undefined
 ): Promise<boolean> {
   const data = await prisma.user.findFirst({
     where: { name: streamer },
@@ -120,5 +120,6 @@ export async function getClientBearer(): Promise<string> {
 
 export function hasExpired(unixTimestamp: number): boolean {
   const currentTimestamp = Math.floor(Date.now() / 1000); // Get current Unix timestamp in seconds
+  console.log(currentTimestamp, unixTimestamp);
   return unixTimestamp < currentTimestamp;
 }

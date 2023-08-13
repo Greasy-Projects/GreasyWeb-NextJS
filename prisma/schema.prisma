@@ -68,6 +68,7 @@ model Wheel {
   id     String       @id @default(cuid())
   user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
+  name   String
   isActive  Boolean   @default(false)
   prizes WheelPrize[]
 }

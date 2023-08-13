@@ -205,6 +205,7 @@ function ManagersComponent({
           <button
             onClick={() => {
               if (streamer !== user) return;
+              void managersQuery.remove();
               void setManagersMutation.mutateAsync().then((d) => {
                 if (d === "signin") return signIn("twitch");
                 void managersQuery.refetch();
@@ -292,3 +293,4 @@ function MinimumGiftSubs({ streamer }: { streamer: string }): JSX.Element {
 }
 
 export default Home;
+

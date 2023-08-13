@@ -35,7 +35,7 @@ interface WheelData {
   optionSize?: number; // Optional
 }
 
-const data: WheelData[] = [
+const dataOTHER: WheelData[] = [
   { option: "10 squats" },
   { option: "25 pushups" },
   { option: "no laugh 5 min" },
@@ -69,7 +69,7 @@ const data: WheelData[] = [
   { option: "timeout 10 mins" },
   { option: "Watch a 10 minute youtube video" },
 ];
-const data2: WheelData[] = [
+const dataIRL: WheelData[] = [
   {
     option: "pretend it's my birthday next meal",
   },
@@ -100,7 +100,7 @@ const data2: WheelData[] = [
   { option: "Touch Grass" },
   { option: "Start Sprinting" },
 ];
-
+const data = dataIRL;
 interface WheelOption {
   option: string | undefined;
   style?: {
@@ -136,7 +136,7 @@ function assignColors(): WheelOption[] {
         },
       });
     } else {
-      const colors: string[] = ["#9e74ff", "#6BFFFF", "#FFA48C"];
+      const colors: string[] = ["#9e74ff", "#ff7380", "#74ffd4"];
 
       result.push({
         option: data[i]?.option,
