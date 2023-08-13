@@ -230,7 +230,7 @@ function MinimumGiftSubs({ streamer }: { streamer: string }): JSX.Element {
       minimumGiftSubs: true,
     }
   );
-  const [input, setInput] = useState<number>(settings?.minimumGiftSubs);
+  const [input, setInput] = useState(settings?.minimumGiftSubs);
   return (
     <div className="mx-3 flex flex-col flex-wrap content-center items-center">
       <strong>Minimum Subs</strong>
