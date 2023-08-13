@@ -4,12 +4,19 @@ import { api } from "~/utils/api";
 import { Inter } from "next/font/google";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { Suspense, useState } from "react";
-
+import { LoaderPage } from "~/components/loading";
 const inter = Inter({ subsets: ["latin"] });
 
 const Home: NextPage = () => {
   const { data: session, status } = useSession();
 
+  if (status === "loading") {
+    return (
+      <>
+        <LoaderPage />
+      </>
+    );
+  }
   if (status !== "unauthenticated" && session) {
     return (
       <>
@@ -181,30 +188,6 @@ const Home: NextPage = () => {
   );
 };
 
-function ManagersComponent() {
-  return (
-    <div
-      className="mx-3 flex flex-col flex-wrap content-center items-center"
-      id="inputs"
-    >
-      <strong>Managers</strong>
-
-      <div className="inline-flex">
-        <div
-          id="code"
-          className="flex cursor-pointer justify-center px-2 text-lg sm:text-2xl"
-        >
-          <div
-            id="code"
-            className="flex cursor-pointer justify-center px-2 text-lg sm:text-2xl"
-          >
-            manager
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 function TPTokenComponent() {
   const { data: TPToken, isLoading } = api.twitchplays.getToken.useQuery();
   // TwitchPlays Token
@@ -213,7 +196,7 @@ function TPTokenComponent() {
   const [TPTokenCopiedHidden, setTPTokenCopiedHidden] = useState(false);
   const [TPTokenResetConfirm, setTPTokenResetConfirm] = useState(false);
   const TPTokenMutation = api.twitchplays.resetToken.useMutation();
-  if (isLoading) return;
+  if (isLoading) return <></>;
   return (
     <div
       className="mx-3 flex flex-col flex-wrap content-center items-center"

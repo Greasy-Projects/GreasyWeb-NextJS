@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { api, cache } from "~/utils/api";
+import { cache } from "~/utils/api";
 import { prisma } from "~/server/db";
 
 interface Data {
@@ -11,11 +11,12 @@ export default async function handler(
   res: NextApiResponse
 ) {
   if (req.method === "POST") {
-    const t = req.headers.authorization;
+    const token = req.headers.authorization;
     const {
-      query: { s },
+      query: { s: streamer },
     } = req;
-    if (!s || !t) return res.status(400).json({ message: "Bad Request" });
+    if (!streamer || !token)
+      return res.status(400).json({ message: "Bad Request" });
 
     const data: Data[] = req.body as Data[];
 
@@ -24,17 +25,17 @@ export default async function handler(
 
     const user = await prisma.user.findUnique({
       where: {
-        TPToken: t,
+        TPToken: token,
       },
       select: {
         name: true,
       },
     });
 
-    if (!user || user?.name?.toLowerCase() !== String(s))
+    if (!user || user?.name?.toLowerCase() !== String(streamer))
       return res.status(401).json({ message: "Unauthorized" });
 
-    cache.set(`twitchplays:${String(s)}`, req.body, 80);
+    cache.set(`twitchplays:${String(streamer)}`, req.body, 80);
     res
       .status(200)
       .json({ message: "TwitchPlays inputs successfully received" });

@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+
 /* ===== Scrollbar CSS ===== */
 /* Firefox */
 * {
@@ -33,11 +34,59 @@
 .code {
     background: rgba(122, 70, 199, 0.08);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
     border: 1px solid rgba(193, 157, 251, 0.3);
     border-radius: 4px;
     color: #c19dfb;
-    overflow: hidden;
-    white-space: nowrap;
+}
+
+.red_button {
+    background: rgba(222, 70, 199, 0.08);
+    border-radius: 0.6rem;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(5.8px);
+    -webkit-backdrop-filter: blur(5.8px);
+    border: 1px solid rgba(222, 70, 199, 0.33);
+    color: #f2659b;
+}
+
+button.red, .card.red {
+    background: rgba(222, 70, 199, 0.08);
+    border-radius: 0.375rem;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(5.8px);
+    -webkit-backdrop-filter: blur(5.8px);
+    border: 1px solid rgba(222, 70, 199, 0.33);
+    color: #f2659b;
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+button.green, .card.green {
+    background: rgba(98, 238, 199, 0.08);
+    border-radius: 0.375rem;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(5.8px);
+    -webkit-backdrop-filter: blur(5.8px);
+    border: 1px solid rgba(98, 238, 173, 0.33);
+    color: rgba(98, 238, 173);
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+h1.strong {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #cc7eff;
+    text-transform: capitalize;
+}
+
+.center-vertical {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
 }

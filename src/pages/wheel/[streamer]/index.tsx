@@ -1,10 +1,10 @@
-import type { NextPage, GetServerSidePropsContext } from "next";
+import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { api } from "~/utils/api";
 import { env } from "~/env.mjs";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import Pusher from "pusher-js";
 
 const Wheel = dynamic(
@@ -126,7 +126,7 @@ function assignColors(): WheelOption[] {
   const result: WheelOption[] = [];
   for (let i = 0; i < data.length; i++) {
     if (data.length % 2 === 0) {
-      const colors: string[] = ["#9e74ff", "#74ffd4"];
+      const colors: string[] = ["#9e74ff", "#6BFFFF"];
 
       result.push({
         option: data[i]?.option,
@@ -136,7 +136,7 @@ function assignColors(): WheelOption[] {
         },
       });
     } else {
-      const colors: string[] = ["#9e74ff", "#ff7380", "#74ffd4"];
+      const colors: string[] = ["#9e74ff", "#6BFFFF", "#FFA48C"];
 
       result.push({
         option: data[i]?.option,
@@ -151,11 +151,7 @@ function assignColors(): WheelOption[] {
   return result;
 }
 
-export const getServerSideProps = (context: GetServerSidePropsContext) => {
-  // const pfp = api.util.pfp.useQuery({
-  //   name: String(context.query.streamer),
-  // }).data;
-  // console.log(pfp);
+export const getServerSideProps = () => {
   return {
     props: {
       SOKETI_KEY: env.SOKETI_APP_KEY,
@@ -177,31 +173,6 @@ const Home: NextPage<{
   const [prizeNumber, setPrizeNumber] = useState(0);
   const _getTTS = api.util.tts.useMutation();
 
-  useEffect(() => {
-    const pusher = new Pusher(SOKETI_KEY, {
-      wsHost: SOKETI_URL,
-      wsPort: 443,
-      forceTLS: true,
-      disableStats: true,
-      enabledTransports: ["ws", "wss"],
-    });
-
-    const channel = pusher.subscribe(String(streamer));
-    if (ENV == "development") {
-      const channel = pusher.subscribe("dev_env");
-      channel.bind("spin", (d: { rand: number }) => {
-        const newPrizeNumber = Math.floor(d.rand * data.length);
-        setPrizeNumber(newPrizeNumber);
-        handleSpin();
-      });
-    }
-    channel.bind("spin", (d: { rand: number }) => {
-      const newPrizeNumber = Math.floor(d.rand * data.length);
-      setPrizeNumber(newPrizeNumber);
-      handleSpin();
-    });
-  });
-
   const getTTS = async () => {
     const res = await _getTTS.mutateAsync({
       text:
@@ -212,21 +183,40 @@ const Home: NextPage<{
     return res.speak_url;
   };
 
-  const handleSpin = () => {
+  const handleSpin = useCallback(() => {
     if (!mustSpin) {
       show(true);
       const audioElement = document.querySelectorAll("audio");
 
       setTimeout(() => {
         if (audioElement[0]) {
-          audioElement[0].volume = 0.4;
+          audioElement[0].volume = 0.5;
           void audioElement[0]?.play();
         }
         setMustSpin(true);
       }, 500);
     }
-  };
+  }, [mustSpin]);
 
+  useEffect(() => {
+    const pusher = new Pusher(SOKETI_KEY, {
+      wsHost: SOKETI_URL,
+      wsPort: 443,
+      forceTLS: true,
+      disableStats: true,
+      enabledTransports: ["ws", "wss"],
+    });
+
+    const channel = pusher.subscribe(String(streamer).toLowerCase());
+    if (ENV == "development") {
+      show(true);
+    }
+    channel.bind("spin", (d: { rand: number }) => {
+      const newPrizeNumber = Math.floor(d.rand * data.length);
+      setPrizeNumber(newPrizeNumber);
+      handleSpin();
+    });
+  }, [SOKETI_KEY, SOKETI_URL, streamer, ENV, handleSpin]);
   return (
     <main className="m-0 flex h-screen place-content-end items-end justify-end">
       <style jsx global>{`
@@ -283,9 +273,11 @@ const Home: NextPage<{
                   audioElement[1].src = tts;
                 }
                 void audioElement[1]?.play();
-                setTimeout(() => {
-                  show(false);
-                }, 10000);
+                if (ENV != "development") {
+                  setTimeout(() => {
+                    show(false);
+                  }, 10000);
+                }
               });
             }}
             textDistance={58}

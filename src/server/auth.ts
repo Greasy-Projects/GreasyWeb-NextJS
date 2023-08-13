@@ -46,6 +46,7 @@ export const authOptions: NextAuthOptions = {
     }),
   },
   adapter: PrismaAdapter(prisma),
+
   providers: [
     TwitchProvider({
       clientId: env.TWITCH_CLIENT_ID,
@@ -53,7 +54,7 @@ export const authOptions: NextAuthOptions = {
       authorization: {
         params: {
           scope:
-            "openid user:read:email channel:read:redemptions channel:read:subscriptions bits:read",
+            "bits:read channel:read:editors channel:read:redemptions channel:read:subscriptions openid user:read:email",
         },
       },
     }),

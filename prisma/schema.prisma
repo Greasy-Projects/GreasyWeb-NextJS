@@ -2,8 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["jsonProtocol"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -52,11 +51,33 @@ model User {
   id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
-  TPToken       String?    @unique
   emailVerified DateTime?
   image         String?
   accounts      Account[]
   sessions      Session[]
+
+  managers Json?
+
+  TPToken String? @unique
+
+  wheels          Wheel[]  
+  minimumGiftSubs Int     @default(3)
+}
+
+model Wheel {
+  id     String       @id @default(cuid())
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  isActive  Boolean   @default(false)
+  prizes WheelPrize[]
+}
+
+model WheelPrize {
+  id      String  @id @default(cuid())
+  wheel   Wheel   @relation(fields: [wheelId], references: [id], onDelete: Cascade)
+  wheelId String
+  name    String
+  image   String?
 }
 
 model VerificationToken {
@@ -65,4 +86,17 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  type      LogType  @default(INFO)
+  createdAt DateTime @default(now())
+  value     String
+}
+
+enum LogType {
+  INFO
+  WARN
+  ERR
 }

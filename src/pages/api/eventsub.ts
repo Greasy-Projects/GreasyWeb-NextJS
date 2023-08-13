@@ -1,6 +1,7 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 import { env } from "~/env.mjs";
+// import { prisma } from "~/server/db";
 import { pusher } from "~/utils/pusher";
 // Notification request headers
 const TWITCH_MESSAGE_ID = "Twitch-Eventsub-Message-Id".toLowerCase();
@@ -77,6 +78,16 @@ export default async function handler(
           hook.subscription.type === "channel.subscription.gift" &&
           hook.event.total >= 3
         ) {
+          // const streamer = await prisma.user.findFirst({
+          //   where: {
+          //     name: hook.event.broadcaster_user_name,
+          //   },
+          //   select: {
+          //     ActiveWheel: true,
+          //     Wheels: true,
+          //   },
+          // });
+          // TODO: Get active wheel and pass data to pusher
           await pusher.trigger("greasymac", "spin", { rand: Math.random() });
         }
         console.log(`Event type: ${hook.subscription.type}`);
@@ -84,7 +95,6 @@ export default async function handler(
         console.log(`User Login: ${hook.event.user_login}`);
         console.log(`User Name: ${hook.event.user_name}`);
         console.log(`Total: ${hook.event.total}`);
-        // ... more properties if needed
 
         res.send(204);
       } else if (MESSAGE_TYPE_VERIFICATION === req.headers[MESSAGE_TYPE]) {

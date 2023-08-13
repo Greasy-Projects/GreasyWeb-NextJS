@@ -2,6 +2,7 @@ import { exampleRouter } from "~/server/api/routers/example";
 import { createTRPCRouter } from "~/server/api/trpc";
 import twitchplays from "~/server/api/routers/twitchplays";
 import util from "~/server/api/routers/util";
+import wheel from "~/server/api/routers/wheel";
 
 /**
  * This is the primary router for your server.
@@ -12,6 +13,7 @@ export const appRouter = createTRPCRouter({
   example: exampleRouter,
   twitchplays,
   util,
+  wheel,
 });
 
 // export type definition of API

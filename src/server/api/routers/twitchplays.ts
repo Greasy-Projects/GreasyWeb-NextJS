@@ -11,17 +11,22 @@ export type ServerData = {
   name: string;
   inputs: [string];
 };
-const dataSchema = z.object({
-  name: z.string(),
-  inputs: z.string().array(),
-});
 export default createTRPCRouter({
-  set: publicProcedure
-    .input(z.object({ data: z.array(dataSchema) }))
-    .mutation(({ input }) => {
-      console.log(input.data);
-      return "received cruncher";
-    }),
+  // set: publicProcedure
+  //   .input(
+  //     z.object({
+  //       data: z.array(
+  //         z.object({
+  //           name: z.string(),
+  //           inputs: z.string().array(),
+  //         })
+  //       ),
+  //     })
+  //   )
+  //   .mutation(({ input }) => {
+  //     console.log(input.data);
+  //     return "received";
+  //   }),
 
   get: publicProcedure
     .input(
@@ -32,6 +37,7 @@ export default createTRPCRouter({
     .query(({ input }) => {
       return cache.get(`twitchplays:${input.streamer}`) || null;
     }),
+
   getToken: protectedProcedure.query(async ({ ctx }) => {
     const data = await ctx.prisma.user.findUnique({
       where: {
@@ -53,9 +59,6 @@ export default createTRPCRouter({
       },
       data: {
         TPToken: hash.digest("hex"),
-      },
-      select: {
-        id: true,
       },
     });
   }),

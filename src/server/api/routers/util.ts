@@ -1,4 +1,3 @@
-import { Input } from "postcss";
 import { z } from "zod";
 import {
   createTRPCRouter,
@@ -7,8 +6,152 @@ import {
 } from "~/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 import { pusher } from "~/utils/pusher";
+import { env } from "~/env.mjs";
+import { deleteUserProviderAccount, hasExpired } from "~/utils/flow";
 
 export default createTRPCRouter({
+  isManager: protectedProcedure
+    .input(
+      z.object({
+        streamer: z.string(),
+        potentialManager: z.string().optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const data = await ctx.prisma.user.findFirst({
+        where: { name: input.streamer },
+        select: { managers: true },
+      });
+      const managers =
+        (data as unknown as {
+          managers: {
+            data: [
+              {
+                user_id: string;
+                user_name: string;
+                created_at: string;
+              }
+            ];
+          };
+        }) || null;
+
+      if (
+        input.streamer.toLowerCase() ===
+          input.potentialManager?.toLowerCase() ||
+        ctx.session.user.name?.toLowerCase() ||
+        managers?.managers.data.some(
+          (i) =>
+            i.user_name.toLowerCase() ===
+              input.potentialManager?.toLowerCase() ||
+            ctx.session.user.name?.toLowerCase()
+        )
+      )
+        return true;
+      return false;
+    }),
+  setManagers: protectedProcedure.mutation(async ({ ctx }) => {
+    const account = await ctx.prisma.account.findFirst({
+      where: {
+        userId: ctx.session.user.id,
+        provider: "twitch",
+      },
+      select: {
+        id: true,
+        providerAccountId: true,
+        access_token: true,
+        refresh_token: true,
+        expires_at: true,
+        scope: true,
+      },
+    });
+    if (
+      !account?.scope?.includes("channel:read:editors") ||
+      hasExpired(account.expires_at || 0)
+    ) {
+      await deleteUserProviderAccount(account?.id || "");
+      return "signin";
+    }
+    if (
+      account?.providerAccountId === undefined ||
+      account?.access_token === null ||
+      account?.refresh_token === null ||
+      account?.expires_at === null
+    )
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Failed to fetch data from Twitch API",
+      });
+
+    // const bearer = await getUserBearer({
+    //   providerAccountId: account.providerAccountId,
+    //   access_token: account.access_token,
+    //   refresh_token: account.refresh_token,
+    //   expires_at: account.expires_at,
+    // });
+
+    const res = await fetch(
+      `https://api.twitch.tv/helix/channels/editors?${new URLSearchParams({
+        broadcaster_id: account.providerAccountId,
+      }).toString()}`,
+      {
+        headers: {
+          "Client-Id": env.TWITCH_CLIENT_ID,
+          Authorization: `Bearer ${account?.access_token}`,
+          Accept: "application/json",
+        },
+      }
+    );
+    console.log(res);
+    if (!res.ok) {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "Failed to fetch data from Twitch API",
+      });
+    }
+    const data = (await res.json()) as {
+      data: [
+        {
+          user_id: string;
+          user_name: string;
+          created_at: string;
+        }
+      ];
+    };
+    console.log(data);
+    await ctx.prisma.user.update({
+      where: {
+        id: ctx.session.user.id,
+      },
+      data: {
+        managers: data,
+      },
+    });
+  }),
+  getManagers: protectedProcedure
+    .input(z.object({ streamer: z.string().optional() }))
+    .query(async ({ ctx, input }) => {
+      const data = await ctx.prisma.user.findFirst({
+        where: {
+          name: input.streamer || ctx.session.user.name,
+        },
+        select: {
+          managers: true,
+        },
+      });
+      return (
+        (data as unknown as {
+          managers: {
+            data: [
+              {
+                user_id: string;
+                user_name: string;
+                created_at: string;
+              }
+            ];
+          };
+        }) || null
+      );
+    }),
   //TODO: secure with ctx
   manualSpin: protectedProcedure
     .input(
@@ -16,8 +159,10 @@ export default createTRPCRouter({
         streamer: z.string(),
       })
     )
-    .mutation(({ input, ctx }) => {
-      void pusher.trigger("greasymac", "spin", { rand: Math.random() });
+    .mutation(({ input }) => {
+      void pusher.trigger(input.streamer.toLowerCase(), "spin", {
+        rand: Math.random(),
+      });
     }),
   tts: publicProcedure
     .input(
