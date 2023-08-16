@@ -65,11 +65,29 @@ export default createTRPCRouter({
       },
     });
     if (
-      !account?.scope?.includes("channel:read:editors") ||
-      hasExpired(account?.expires_at || 0)
+      hasExpired(account?.expires_at || 0) ||
+      !account?.scope?.includes("channel:read:editors")
     ) {
       await deleteUserProviderAccount(account?.id || "");
-      return "signin";
+      try {
+        console.log("Deleting");
+        return "signin";
+      } finally {
+        await ctx.prisma.user.update({
+          where: {
+            id: ctx.session.user.id,
+          },
+          data: {
+            managers: {
+              data: [
+                {
+                  user_name: "please refresh again.",
+                },
+              ],
+            },
+          },
+        });
+      }
     }
     if (
       account?.providerAccountId === undefined ||
