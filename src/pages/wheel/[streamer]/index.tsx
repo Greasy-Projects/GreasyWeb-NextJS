@@ -177,7 +177,7 @@ const Home: NextPage<{
     const res = await _getTTS.mutateAsync({
       text:
         data[prizeNumber]?.option ??
-        "Hi, brian here. I think I fucked up.... something went wrong.",
+        "Hi, brian here. I think I fucked up.... something went wrong. get scammed I guess!",
       voice: "Brian",
     });
     return res.speak_url;
@@ -191,7 +191,7 @@ const Home: NextPage<{
       setTimeout(() => {
         if (audioElement[0]) {
           audioElement[0].volume = 0.5;
-          void audioElement[0]?.play();
+          void audioElement[0].play();
         }
         setMustSpin(true);
       }, 500);

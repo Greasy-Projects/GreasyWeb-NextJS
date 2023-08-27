@@ -7,6 +7,8 @@ import { LoginPage } from "~/components/login";
 import { useSession, signIn } from "next-auth/react";
 import { type ChangeEvent, useState, Suspense } from "react";
 import CachedIcon from "@mui/icons-material/Cached";
+import ScrollContainer from "react-indiana-drag-scroll";
+import "react-indiana-drag-scroll/dist/style.css";
 
 const Home: NextPage = () => {
   const router = useRouter();
@@ -34,7 +36,7 @@ const Home: NextPage = () => {
     if (
       streamer.toLowerCase() !== session.user.name?.toLowerCase() &&
       !managers?.managers?.data?.some(
-        (i) => i.user_name.toLowerCase() === session.user.name?.toLowerCase()
+        (i) => i.user_name.toLowerCase() === session.user.name?.toLowerCase(),
       )
     )
       return "not allowed";
@@ -188,20 +190,18 @@ function ManagersComponent({
               display: none;
             }
           `}</style>
-          <div className="code relative flex w-52 space-x-2 !overflow-x-scroll p-1">
+          <ScrollContainer className="scroll-container code relative flex w-52 space-x-2 !overflow-x-scroll p-1">
             {managers?.managers?.data.map((d, i) => {
               return (
                 <code
                   key={i}
-                  className={
-                    "green code flex-shrink-0 cursor-pointer px-1 py-0 text-base"
-                  }
+                  className={"green code flex-shrink-0 px-1 py-0 text-base"}
                 >
                   {d.user_name}
                 </code>
               );
             })}
-          </div>
+          </ScrollContainer>
           <button
             onClick={() => {
               if (streamer !== user) return;
@@ -228,9 +228,11 @@ function MinimumGiftSubs({ streamer }: { streamer: string }): JSX.Element {
     {
       streamer: streamer,
       minimumGiftSubs: true,
-    }
+    },
   );
-  const [input, setInput] = useState<number | null>(settings?.minimumGiftSubs);
+  const [input, setInput] = useState<number | null>(
+    settings?.minimumGiftSubs as number,
+  );
   return (
     <div className="mx-3 flex flex-col flex-wrap content-center items-center">
       <strong>Minimum Subs</strong>
@@ -271,7 +273,7 @@ function MinimumGiftSubs({ streamer }: { streamer: string }): JSX.Element {
               MinimumGiftSubsMutation.reset();
               void MinimumGiftSubsQuery.refetch().then(() => {
                 const input = document.getElementById(
-                  "MinimumGiftSubs"
+                  "MinimumGiftSubs",
                 ) as HTMLInputElement | null;
                 if (input != null && input.value) input.value = "null";
               });
