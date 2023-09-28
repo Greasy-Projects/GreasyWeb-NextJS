@@ -124,7 +124,7 @@ export default createTRPCRouter({
           user_id: string;
           user_name: string;
           created_at: string;
-        }
+        }[],
       ];
     };
     await ctx.prisma.user.update({
@@ -136,31 +136,7 @@ export default createTRPCRouter({
       },
     });
   }),
-  getManagers: protectedProcedure
-    .input(z.object({ streamer: z.string().optional() }))
-    .query(async ({ ctx, input }) => {
-      const data = await ctx.prisma.user.findFirst({
-        where: {
-          name: input.streamer || ctx.session.user.name,
-        },
-        select: {
-          managers: true,
-        },
-      });
-      return (
-        (data as unknown as {
-          managers: {
-            data: [
-              {
-                user_id: string;
-                user_name: string;
-                created_at: string;
-              }
-            ];
-          };
-        }) || null
-      );
-    }),
+  
   //TODO: secure with ctx
   manualSpin: protectedProcedure
     .input(

@@ -1,16 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "mysql"
-  // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-  // Further reading:
-  // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
   url      = env("DATABASE_URL")
 }
 
@@ -20,7 +13,6 @@ model Example {
   updatedAt DateTime @updatedAt
 }
 
-// Necessary for Next auth
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -48,37 +40,35 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-
-  managers Json?
-
-  TPToken String? @unique
-
-  wheels          Wheel[]  
-  minimumGiftSubs Int     @default(3)
+  id               String    @id @default(cuid())
+  name             String?
+  email            String?   @unique
+  emailVerified    DateTime?
+  image            String?
+  TPToken          String?   @unique
+  SEJWT            String?   @db.Text
+  minimumGiftSubs  Int       @default(3)
+  minimumTipAmount Int       @default(5)
+  managers         Json?
+  accounts         Account[]
+  sessions         Session[]
+  wheels           Wheel[]
 }
 
 model Wheel {
-  id     String       @id @default(cuid())
-  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
-  name   String
-  isActive  Boolean   @default(false)
-  prizes WheelPrize[]
+  id       String       @id @default(cuid())
+  userId   String
+  isActive Boolean      @default(false)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prizes   WheelPrize[]
 }
 
 model WheelPrize {
   id      String  @id @default(cuid())
-  wheel   Wheel   @relation(fields: [wheelId], references: [id], onDelete: Cascade)
   wheelId String
   name    String
   image   String?
+  wheel   Wheel   @relation(fields: [wheelId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {

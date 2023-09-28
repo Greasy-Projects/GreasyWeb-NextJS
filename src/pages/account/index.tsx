@@ -3,10 +3,12 @@ import Head from "next/head";
 import { api } from "~/utils/api";
 import { Inter } from "next/font/google";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { Suspense, useState } from "react";
+import { ChangeEvent, Suspense, useState } from "react";
 import { LoaderPage } from "~/components/loading";
 import { LoginPage } from "~/components/login";
 import router from "next/router";
+import HelpIcon from "@mui/icons-material/Help";
+
 const inter = Inter({ subsets: ["latin"] });
 
 const Home: NextPage = () => {
@@ -125,7 +127,8 @@ const Home: NextPage = () => {
         `}</style>
         <main className="flex min-h-screen justify-center bg-gradient-to-b from-[#20113f] to-[#12131c] py-14">
           <div className="container flex max-w-fit flex-col items-center justify-center px-4">
-            <div className="twitchplays_card h-auto w-full rounded-xl bg-[#0d1117]/60 py-2 sm:py-4">
+            <div className="twitchplays_card flex h-auto w-full flex-col rounded-xl !rounded-tl-none bg-[#0d1117]/60 py-2 ">
+              {" "}
               <h1 className="xs:text-5xl w-full select-none bg-gradient-to-br from-[#7d2be1] to-[#9b30ff] bg-clip-text px-5 py-2 pt-4 text-center text-[10vw] font-[900] uppercase leading-tight text-transparent sm:px-12 sm:py-8 sm:text-7xl">
                 Account
               </h1>
@@ -146,13 +149,20 @@ const Home: NextPage = () => {
                   go to settings
                 </button>
               </div>
-              <hr className="mb-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:mb-4" />
-              {/* <Suspense>
-                <ManagersComponent />
-              </Suspense>
-              <hr className="my-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:my-4" /> */}
+              {/* <hr className="mb-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:mb-4" />
+              <Suspense>
+                <ManagersComponent
+                  streamer={session.user?.name || ""}
+                  user={session.user.name || ""}
+                />
+              </Suspense> */}
+              <hr className="my-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:my-4" />
               <Suspense>
                 <TPTokenComponent />
+              </Suspense>
+              <hr className="my-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:my-4" />
+              <Suspense>
+                <JWTComponent />
               </Suspense>
               <hr className="my-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:my-4" />
               <div className="flex flex-row gap-3">
@@ -289,7 +299,7 @@ function TPTokenComponent() {
                     setTimeout(() => {
                       TPTokenMutation.reset();
                     }, 10000);
-                  })
+                  }),
               );
             }
           }}
@@ -313,4 +323,57 @@ function TPTokenComponent() {
   );
 }
 
+function JWTComponent() {
+  const [input, setInput] = useState<string>("");
+
+  const JWTMutation = api.user.setSEJWT.useMutation();
+
+  return (
+    <div
+      className="mx-3 flex flex-col flex-wrap content-center items-center"
+      id="inputs"
+    >
+      <strong>StreamElements JWToken</strong>
+      <a
+        target="_blank"
+        href="https://streamelements.com/dashboard/account/channels"
+      >
+        get token here
+      </a>
+
+      <div className="flex w-full items-center justify-center">
+        <input
+          id="SEJWTInput"
+          autoComplete="false"
+          onInput={(d: ChangeEvent<HTMLInputElement>) => {
+            setInput(d.target.value);
+          }}
+          className="code mx-2 w-fit pl-1 sm:pl-2"
+        />
+        <button
+          onClick={() => {
+            if (input === "" || input === "jwt set!") return;
+            void JWTMutation.mutateAsync({
+              new: input,
+            }).then(() => {
+              JWTMutation.reset();
+              setInput("");
+              const input = document.getElementById(
+                "SEJWTInput",
+              ) as HTMLInputElement | null;
+              if (input != null && input.value) input.value = "jwt set!";
+            });
+          }}
+          className={
+            (input === "" || input === "jwt set!"
+              ? "cursor-not-allowed opacity-50"
+              : "") + " green mr-2 !rounded-md text-base "
+          }
+        >
+          UPDATE
+        </button>
+      </div>
+    </div>
+  );
+}
 export default Home;

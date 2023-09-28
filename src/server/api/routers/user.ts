@@ -7,26 +7,30 @@ export type ServerData = {
 };
 
 export default createTRPCRouter({
-  getSelect: protectedProcedure
-    .input(
-      z.object({
-        streamer: z.string().optional(),
-        minimumGiftSubs: z.boolean().optional().default(false),
-      })
-    )
+  getManagers: protectedProcedure
+    .input(z.object({ streamer: z.string().optional() }))
     .query(async ({ ctx, input }) => {
-      const data = await ctx.prisma.user.findUnique({
-        where: { id: ctx.session.user.id },
+      const data = await ctx.prisma.user.findFirst({
+        where: {
+          name: input.streamer || ctx.session.user.name,
+        },
         select: {
-          minimumGiftSubs: input.minimumGiftSubs,
+          managers: true,
         },
       });
-      if (!data) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-        });
-      }
-      return data;
+      return (
+        (data as unknown as {
+          managers: {
+            data: [
+              {
+                user_id: string;
+                user_name: string;
+                created_at: string;
+              },
+            ];
+          };
+        }) || null
+      );
     }),
   getMinimumGiftSubs: protectedProcedure.query(async ({ ctx }) => {
     const data = await ctx.prisma.user.findUnique({
@@ -53,4 +57,33 @@ export default createTRPCRouter({
         select: { minimumGiftSubs: true },
       });
     }),
+  setSEJWT: protectedProcedure
+    .input(z.object({ new: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      await ctx.prisma.user.update({
+        where: {
+          id: ctx.session.user.id,
+        },
+        data: {
+          SEJWT: input.new,
+        },
+        select: { name: true },
+      });
+    }),
+  getSEJWT: protectedProcedure.query(async ({ ctx }) => {
+    const data = await ctx.prisma.user.findUnique({
+      where: {
+        id: ctx.session.user.id,
+      },
+      select: {
+        SEJWT: true,
+      },
+    });
+    if (!data) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+      });
+    }
+    return (data?.SEJWT as string) || null;
+  }),
 });
