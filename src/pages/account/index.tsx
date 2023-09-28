@@ -127,53 +127,64 @@ const Home: NextPage = () => {
         `}</style>
         <main className="flex min-h-screen justify-center bg-gradient-to-b from-[#20113f] to-[#12131c] py-14">
           <div className="container flex max-w-fit flex-col items-center justify-center px-4">
-            <div className="twitchplays_card flex h-auto w-full flex-col rounded-xl !rounded-tl-none bg-[#0d1117]/60 py-2 ">
-              {" "}
-              <h1 className="xs:text-5xl w-full select-none bg-gradient-to-br from-[#7d2be1] to-[#9b30ff] bg-clip-text px-5 py-2 pt-4 text-center text-[10vw] font-[900] uppercase leading-tight text-transparent sm:px-12 sm:py-8 sm:text-7xl">
-                Account
-              </h1>
-              <hr className="mb-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:mb-4" />
+            <div className="container flex max-w-fit flex-col items-center justify-center px-4">
               <div
-                className="mx-6 flex flex-col flex-wrap content-center items-center"
-                id="inputs"
+                className={
+                  " green card self-start !rounded-b-none !border-purple-500/50 "
+                }
               >
-                <strong>SubWheel Settings</strong>
-                <button
-                  className="green m-2 w-full py-1"
-                  onClick={() =>
-                    void router.push(
-                      `/wheel/${session.user?.name ?? ""}/settings`,
-                    )
-                  }
-                >
-                  go to settings
-                </button>
+                <h1 className="strong !text-sm !uppercase">
+                  {session.user.name?.toLowerCase()}
+                </h1>
               </div>
-              {/* <hr className="mb-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:mb-4" />
+              <div className="twitchplays_card flex h-auto w-full flex-col rounded-xl !rounded-tl-none bg-[#0d1117]/60 py-2 ">
+                {" "}
+                <h1 className="xs:text-5xl w-full select-none bg-gradient-to-br from-[#7d2be1] to-[#9b30ff] bg-clip-text px-5 py-2 pt-4 text-center text-[10vw] font-[900] uppercase leading-tight text-transparent sm:px-12 sm:py-8 sm:text-7xl">
+                  Account
+                </h1>
+                <hr className="mb-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:mb-4" />
+                <div
+                  className="mx-6 flex flex-col flex-wrap content-center items-center"
+                  id="inputs"
+                >
+                  <strong>SubWheel Settings</strong>
+                  <button
+                    className="green m-2 w-full py-1"
+                    onClick={() =>
+                      void router.push(
+                        `/wheel/${session.user?.name ?? ""}/settings`,
+                      )
+                    }
+                  >
+                    go to settings
+                  </button>
+                </div>
+                {/* <hr className="mb-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:mb-4" />
               <Suspense>
                 <ManagersComponent
                   streamer={session.user?.name || ""}
                   user={session.user.name || ""}
                 />
               </Suspense> */}
-              <hr className="my-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:my-4" />
-              <Suspense>
-                <TPTokenComponent />
-              </Suspense>
-              <hr className="my-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:my-4" />
-              <Suspense>
-                <JWTComponent />
-              </Suspense>
-              <hr className="my-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:my-4" />
-              <div className="flex flex-row gap-3">
-                <button
-                  onClick={() => {
-                    void signOut();
-                  }}
-                  className="red_button ml-4 flex items-center px-2 py-2 font-bold uppercase"
-                >
-                  LOGOUT
-                </button>
+                <hr className="my-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:my-4" />
+                <Suspense>
+                  <TPTokenComponent />
+                </Suspense>
+                <hr className="my-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:my-4" />
+                <Suspense>
+                  <JWTComponent />
+                </Suspense>
+                <hr className="my-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 sm:my-4" />
+                <div className="flex flex-row gap-3">
+                  <button
+                    onClick={() => {
+                      void signOut();
+                    }}
+                    className="red_button ml-4 flex items-center px-2 py-2 font-bold uppercase"
+                  >
+                    LOGOUT
+                  </button>
+                </div>
               </div>
             </div>
           </div>
