@@ -1,23 +1,23 @@
 import { type NextPage } from "next";
-import { useRouter } from "next/router";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
-import { api } from "~/utils/api";
+import { useRouter } from "next/router";
+import { Suspense, useState, type ChangeEvent } from "react";
+import "react-indiana-drag-scroll/dist/style.css";
 import { LoaderPage } from "~/components/loading";
 import { LoginPage } from "~/components/login";
-import { useSession, signIn } from "next-auth/react";
-import { type ChangeEvent, useState, Suspense } from "react";
-import CachedIcon from "@mui/icons-material/Cached";
-import ScrollContainer from "react-indiana-drag-scroll";
-import "react-indiana-drag-scroll/dist/style.css";
+import { ManagersComponent } from "~/components/managers";
+import { api } from "~/utils/api";
 
 const Home: NextPage = () => {
   const router = useRouter();
   const streamer = String(router.query.streamer);
   const { data: session, status } = useSession();
   const manualSpin = api.util.manualSpin.useMutation();
-  const { data: managers } = api.util.getManagers.useQuery({
+  const { data: managers } = api.user.getManagers.useQuery({
     streamer: streamer,
   });
+
   console.log(status);
   if (status === "loading") {
     return (
@@ -135,26 +135,24 @@ const Home: NextPage = () => {
               </Suspense>
               <hr className="my-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25" />
               <Suspense
-                fallback={
-                  <div className="mx-3 flex flex-col flex-wrap content-center items-center">
-                    <strong>Minimum Subs</strong>
-                    <div className="flex w-full items-center justify-center">
-                      <div className="code mx-2 w-[5rem] text-center opacity-25">
-                        loading...
-                      </div>
-
-                      <button
-                        className={
-                          "green mr-2 cursor-not-allowed !rounded-md text-base opacity-50 "
-                        }
-                      >
-                        UPDATE
-                      </button>
-                    </div>
-                  </div>
-                }
+                fallback={<MinimumAmountFallback label="Minimum Gifted Subs" />}
               >
-                <MinimumGiftSubs streamer={streamer} />
+                <MinimumSetting
+                  streamer={streamer}
+                  settingType="minimumGiftSubs"
+                  label="Minimum Gifted Subs"
+                  limit={20}
+                />
+              </Suspense>
+              <Suspense
+                fallback={<MinimumAmountFallback label="Minimum Tip Amount" />}
+              >
+                <MinimumSetting
+                  streamer={streamer}
+                  settingType="minimumTipAmount"
+                  label="Minimum Tip Amount"
+                  limit={300}
+                />
               </Suspense>
             </div>
           </div>
@@ -164,127 +162,75 @@ const Home: NextPage = () => {
   }
 };
 
-function ManagersComponent({
+function MinimumSetting({
   streamer,
-  user,
+  settingType,
+  label,
+  limit,
 }: {
   streamer: string;
-  user: string;
+  settingType: "minimumGiftSubs" | "minimumTipAmount";
+  label: string;
+  limit: number;
 }): JSX.Element {
-  const setManagersMutation = api.util.setManagers.useMutation();
-  const [managers, managersQuery] = api.util.getManagers.useSuspenseQuery({
+  const [settings, queryFunction] = api.wheel.getSelect.useSuspenseQuery({
     streamer: streamer,
+    [settingType]: true,
   });
-  if (!managers.managers.data) return <></>;
-  streamer = streamer.toLowerCase();
-  user = user.toLowerCase();
-  return (
-    <>
-      <hr className="my-2 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25" />
+  const updateMutation =
+    settingType === "minimumGiftSubs"
+      ? api.wheel.updateMinimumGiftSubs.useMutation()
+      : api.wheel.updateMinimumTipAmount.useMutation();
+  const [input, setInput] = useState<number | null>(settings[settingType]);
 
-      <div className="mx-3 flex flex-col items-center">
-        <strong>Managers</strong>
-        <div className="flex w-full items-center justify-center overflow-hidden">
-          <style jsx>{`
-            ::-webkit-scrollbar {
-              display: none;
-            }
-          `}</style>
-          <ScrollContainer className="scroll-container code relative flex w-52 space-x-2 !overflow-x-scroll p-1">
-            {managers?.managers?.data.map((d, i) => {
-              return (
-                <code
-                  key={i}
-                  className={"green code flex-shrink-0 px-1 py-0 text-base"}
-                >
-                  {d.user_name}
-                </code>
-              );
-            })}
-          </ScrollContainer>
-          <button
-            onClick={() => {
-              if (streamer !== user) return;
-              void managersQuery.remove();
-              void setManagersMutation.mutateAsync().then((d) => {
-                if (d === "signin") return signIn("twitch");
-                void managersQuery.refetch();
-              });
-            }}
-            title="Refresh Managers"
-            className={(streamer !== user ? "hidden" : "") + " green ml-2 p-1"}
-          >
-            <CachedIcon />
-          </button>
-        </div>
-      </div>
-    </>
-  );
-}
+  const inputId = `${settingType}Input`;
 
-function MinimumGiftSubs({ streamer }: { streamer: string }): JSX.Element {
-  const MinimumGiftSubsMutation = api.wheel.updateMinimumGiftSubs.useMutation();
-  const [settings, MinimumGiftSubsQuery] = api.wheel.getSelect.useSuspenseQuery(
-    {
-      streamer: streamer,
-      minimumGiftSubs: true,
-    },
-  );
-  const [input, setInput] = useState<number | null>(
-    settings?.minimumGiftSubs as number,
-  );
   return (
     <div className="mx-3 flex flex-col flex-wrap content-center items-center">
-      <strong>Minimum Subs</strong>
+      <strong>{label}</strong>
       <div className="flex w-full items-center justify-center">
-        {MinimumGiftSubsQuery.isLoading ? (
-          <div className="code mx-2 w-[5rem] text-center opacity-25">
-            loading...
-          </div>
-        ) : (
-          <input
-            id="MinimumGiftSubs"
-            type="number"
-            onInput={(d: ChangeEvent<HTMLInputElement>) => {
-              const t = Number(d.currentTarget.value);
-              d.target.value = parseInt(d.currentTarget.value).toString();
-              if (t > 10) d.target.value = "10";
-              if (t <= 0) {
-                setInput(null);
-                d.target.value = "null";
-              } else setInput(parseInt(d.target.value));
-            }}
-            placeholder={String(settings?.minimumGiftSubs)}
-            className="code mx-2 w-fit max-w-[5rem] pl-1 sm:pl-2"
-          />
-        )}
+        <input
+          id={inputId}
+          type="number"
+          onInput={(d: ChangeEvent<HTMLInputElement>) => {
+            const t = Number(d.currentTarget.value);
+            d.target.value = parseInt(d.currentTarget.value).toString();
+            if (t > limit) d.target.value = String(limit);
+            if (t <= 0) {
+              setInput(null);
+              d.target.value = "null";
+            } else setInput(parseInt(d.target.value));
+          }}
+          placeholder={String(settings[settingType])}
+          className="code mx-2 w-fit max-w-[5rem] pl-1 sm:pl-2"
+        />
         <button
           onClick={() => {
             if (
-              input == settings?.minimumGiftSubs ||
-              input == 0 ||
+              input === settings[settingType] ||
+              input === 0 ||
               input === null
             )
               return;
-            void MinimumGiftSubsMutation.mutateAsync({
-              streamer: streamer,
-              new: input,
-            }).then(() => {
-              MinimumGiftSubsMutation.reset();
-              void MinimumGiftSubsQuery.refetch().then(() => {
-                const input = document.getElementById(
-                  "MinimumGiftSubs",
-                ) as HTMLInputElement | null;
-                if (input != null && input.value) input.value = "null";
+            void updateMutation
+              .mutateAsync({
+                streamer: streamer,
+                new: input,
+              })
+              .then(() => {
+                updateMutation.reset();
+                void queryFunction.refetch().then(() => {
+                  const input = document.getElementById(
+                    inputId,
+                  ) as HTMLInputElement | null;
+                  if (input != null && input.value) input.value = "null";
+                });
               });
-            });
           }}
           className={
-            (input == settings?.minimumGiftSubs || input === 0 || input === null
+            (input === settings[settingType] || input === 0 || input === null
               ? "cursor-not-allowed opacity-50"
-              : "") +
-            (input === 0 ? " red" : " green") +
-            " mr-2 !rounded-md text-base "
+              : "") + " green mr-2 !rounded-md text-base "
           }
         >
           UPDATE
@@ -294,5 +240,20 @@ function MinimumGiftSubs({ streamer }: { streamer: string }): JSX.Element {
   );
 }
 
-export default Home;
+function MinimumAmountFallback({ label }: { label: string }): JSX.Element {
+  return (
+    <div className="mx-3 flex flex-col flex-wrap content-center items-center">
+      <strong>{label}</strong>
+      <div className="flex w-full items-center justify-center">
+        <div className="code mx-2 w-[5rem] text-center opacity-25">
+          loading...
+        </div>
+        <button className="green mr-2 cursor-not-allowed !rounded-md text-base opacity-50">
+          UPDATE
+        </button>
+      </div>
+    </div>
+  );
+}
 
+export default Home;

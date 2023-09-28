@@ -119,7 +119,7 @@ export async function getClientBearer(): Promise<string> {
 }
 
 export function hasExpired(unixTimestamp: number): boolean {
-  const currentTimestamp = Math.floor(Date.now() / 1000); // Get current Unix timestamp in seconds
+  const currentTimestamp = Math.floor(Date.now() / 1000);
   console.log(currentTimestamp, unixTimestamp);
   return unixTimestamp < currentTimestamp;
 }
