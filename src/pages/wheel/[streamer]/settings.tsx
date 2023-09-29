@@ -18,8 +18,7 @@ const Home: NextPage = () => {
     streamer: streamer,
   });
 
-  console.log(status);
-  if (status === "loading") {
+  if (status === "loading" || !managers) {
     return (
       <>
         <LoaderPage />
@@ -32,14 +31,16 @@ const Home: NextPage = () => {
         <LoginPage title="sub wheel" />
       </>
     );
-  } else if (session != undefined) {
+  } else if (session != undefined && managers) {
     if (
       streamer.toLowerCase() !== session.user.name?.toLowerCase() &&
       !managers?.managers?.data?.some(
         (i) => i.user_name.toLowerCase() === session.user.name?.toLowerCase(),
       )
     )
-      return "not allowed";
+      void router.replace(
+        `/wheel/${session.user.name?.toLowerCase() ?? ""}/settings`,
+      );
 
     return (
       <>
@@ -152,6 +153,7 @@ const Home: NextPage = () => {
                   settingType="minimumTipAmount"
                   label="Minimum Tip Amount"
                   limit={300}
+                  floatValue
                 />
               </Suspense>
             </div>
@@ -167,11 +169,13 @@ function MinimumSetting({
   settingType,
   label,
   limit,
+  floatValue = false,
 }: {
   streamer: string;
   settingType: "minimumGiftSubs" | "minimumTipAmount";
   label: string;
   limit: number;
+  floatValue?: boolean;
 }): JSX.Element {
   const [settings, queryFunction] = api.wheel.getSelect.useSuspenseQuery({
     streamer: streamer,
@@ -181,7 +185,7 @@ function MinimumSetting({
     settingType === "minimumGiftSubs"
       ? api.wheel.updateMinimumGiftSubs.useMutation()
       : api.wheel.updateMinimumTipAmount.useMutation();
-  const [input, setInput] = useState<number | null>(settings[settingType]);
+  const [input, setInput] = useState<number | null>(null);
 
   const inputId = `${settingType}Input`;
 
@@ -192,14 +196,18 @@ function MinimumSetting({
         <input
           id={inputId}
           type="number"
+          value={input !== null ? String(input) : ""}
           onInput={(d: ChangeEvent<HTMLInputElement>) => {
-            const t = Number(d.currentTarget.value);
-            d.target.value = parseInt(d.currentTarget.value).toString();
-            if (t > limit) d.target.value = String(limit);
-            if (t <= 0) {
+            const t = floatValue
+              ? parseFloat(d.currentTarget.value)
+              : parseInt(d.currentTarget.value);
+            if (t > limit) {
+              setInput(limit);
+            } else if (t <= 0) {
               setInput(null);
-              d.target.value = "null";
-            } else setInput(parseInt(d.target.value));
+            } else {
+              setInput(t);
+            }
           }}
           placeholder={String(settings[settingType])}
           className="code mx-2 w-fit max-w-[5rem] pl-1 sm:pl-2"
@@ -220,10 +228,7 @@ function MinimumSetting({
               .then(() => {
                 updateMutation.reset();
                 void queryFunction.refetch().then(() => {
-                  const input = document.getElementById(
-                    inputId,
-                  ) as HTMLInputElement | null;
-                  if (input != null && input.value) input.value = "null";
+                  setInput(null);
                 });
               });
           }}

@@ -48,7 +48,7 @@ model User {
   TPToken          String?   @unique
   SEJWT            String?   @db.Text
   minimumGiftSubs  Int       @default(3)
-  minimumTipAmount Int       @default(5)
+  minimumTipAmount Float     @default(5) 
   managers         Json?
   accounts         Account[]
   sessions         Session[]
