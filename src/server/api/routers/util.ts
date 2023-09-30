@@ -110,7 +110,7 @@ export default createTRPCRouter({
           Authorization: `Bearer ${account?.access_token}`,
           Accept: "application/json",
         },
-      }
+      },
     );
     if (!res.ok) {
       throw new TRPCError({
@@ -136,18 +136,20 @@ export default createTRPCRouter({
       },
     });
   }),
-  
+
   //TODO: secure with ctx
   manualSpin: protectedProcedure
     .input(
       z.object({
         streamer: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       if (!(await isManager(input.streamer, ctx.session.user.name))) return;
       void pusher.trigger(input.streamer.toLowerCase(), "spin", {
         rand: Math.random(),
+        isMock: true,
+        id: Math.floor(Math.random() * Date.now()).toString(18),
       });
     }),
   tts: publicProcedure
@@ -155,7 +157,7 @@ export default createTRPCRouter({
       z.object({
         text: z.string(),
         voice: z.string(),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
       const res = await fetch("https://streamlabs.com/polly/speak", {
@@ -184,7 +186,7 @@ export default createTRPCRouter({
     .input(
       z.object({
         name: z.string(),
-      })
+      }),
     )
     .query(async ({ input, ctx }) => {
       const res = ctx.prisma.user.findFirst({
@@ -198,4 +200,3 @@ export default createTRPCRouter({
       return res;
     }),
 });
-

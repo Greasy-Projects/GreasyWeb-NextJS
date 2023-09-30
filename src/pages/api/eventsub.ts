@@ -53,7 +53,7 @@ interface Notification {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method === "POST") {
     console.log(req.body);
@@ -65,17 +65,16 @@ export default async function handler(
     const hmac = HMAC_PREFIX + getHmac(env.TWITCH_CLIENT_SECRET, message); // Signature to compare
 
     if (verifyMessage(hmac, req.headers[TWITCH_MESSAGE_SIGNATURE] as string)) {
-      console.log("signatures match");
-
       // Get JSON object from body, so you can process the message.
       const hook = req.body as Notification;
+      console.log(hook);
       if (
         MESSAGE_TYPE_NOTIFICATION === req.headers[MESSAGE_TYPE] &&
         hook.event
       ) {
         // TODO: Do something with the event's data.
         if (
-          hook.subscription.type === "channel.subscription.gift" &&
+        hook.subscription.type === "channel.subscription.gift" &&
           hook.event.total >= 3
         ) {
           // const streamer = await prisma.user.findFirst({
@@ -88,7 +87,10 @@ export default async function handler(
           //   },
           // });
           // TODO: Get active wheel and pass data to pusher
-          await pusher.trigger("greasymac", "spin", { rand: Math.random() });
+          await pusher.trigger("greasymac", "spin", {
+            rand: Math.random(),
+            id: Math.floor(Math.random() * Date.now()).toString(18),
+          });
         }
         console.log(`User Name: ${hook.event.user_name}`);
         console.log(`Total: ${hook.event.total}`);
@@ -102,12 +104,12 @@ export default async function handler(
         console.log(`${hook.subscription.type} notifications revoked!`);
         console.log(`reason: ${hook.subscription.status}`);
         console.log(
-          `condition: ${JSON.stringify(hook.subscription.condition, null, 4)}`
+          `condition: ${JSON.stringify(hook.subscription.condition, null, 4)}`,
         );
       } else {
         res.send(204);
         console.log(
-          `Unknown message type: ${req.headers[MESSAGE_TYPE] as string}`
+          `Unknown message type: ${req.headers[MESSAGE_TYPE] as string}`,
         );
       }
     } else {
@@ -135,11 +137,11 @@ function getHmac(secret: string, message: string): string {
 // Verify whether our hash matches the hash that Twitch passed in the header.
 function verifyMessage(hmac: string, verifySignature: string): boolean {
   console.log(
-    crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(verifySignature))
+    crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(verifySignature)),
   );
   return crypto.timingSafeEqual(
     Buffer.from(hmac),
-    Buffer.from(verifySignature)
+    Buffer.from(verifySignature),
   );
 }
 function validateCondition(condition: Condition): condition is Condition {
@@ -170,7 +172,7 @@ function validateEvent(event: Event): event is Event {
 }
 
 function validateNotification(
-  notification: Notification
+  notification: Notification,
 ): notification is Notification {
   return (
     typeof notification === "object" &&

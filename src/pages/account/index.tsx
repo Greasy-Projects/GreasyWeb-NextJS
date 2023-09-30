@@ -3,11 +3,10 @@ import Head from "next/head";
 import { api } from "~/utils/api";
 import { Inter } from "next/font/google";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { ChangeEvent, Suspense, useState } from "react";
+import { type ChangeEvent, Suspense, useState } from "react";
 import { LoaderPage } from "~/components/loading";
 import { LoginPage } from "~/components/login";
 import router from "next/router";
-import HelpIcon from "@mui/icons-material/Help";
 
 const inter = Inter({ subsets: ["latin"] });
 

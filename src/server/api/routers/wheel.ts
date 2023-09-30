@@ -93,7 +93,7 @@ export default createTRPCRouter({
       });
     }),
   tipSpin: protectedProcedure
-    .input(z.object({ amount: z.number() }))
+    .input(z.object({ amount: z.number(), id: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const user = await ctx.prisma.user.findUniqueOrThrow({
         where: {
@@ -106,6 +106,7 @@ export default createTRPCRouter({
       if (input.amount < user?.minimumTipAmount) return;
       void pusher.trigger((ctx.session.user.name ?? "").toLowerCase(), "spin", {
         rand: Math.random(),
+        id: input.id,
       });
     }),
 });

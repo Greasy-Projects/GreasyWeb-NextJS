@@ -4,15 +4,14 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { api } from "~/utils/api";
 import { env } from "~/env.mjs";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import Pusher from "pusher-js";
 
 const Wheel = dynamic(
   () => import("react-custom-roulette").then((i) => i.Wheel),
-  { ssr: false }
+  { ssr: false },
 );
 
-import { useState } from "react";
 interface ImageProps {
   uri: string;
   offsetX?: number; // Optional
@@ -35,55 +34,51 @@ interface WheelData {
   optionSize?: number; // Optional
 }
 
-const dataOTHER: WheelData[] = [
-  { option: "10 squats" },
-  { option: "25 pushups" },
-  { option: "no laugh 5 min" },
-  { option: "clown wig" },
-  { option: "geoguessr round" },
-  { option: "add/remove vip(temporary)" },
-  { option: "stanky leg" },
-  { option: "rave" },
-  { option: "take a shot" },
-  { option: "stare" },
-  { option: "mute mic 5 mins" },
-  { option: "oversaturated cam 10 minutes" },
-  { option: "lay down for 5 minutes" },
-  { option: "5 minutes of youtube kids" },
-  { option: "scream your name" },
-  { option: "shit mic" },
-  { option: "scammed" },
-  { option: "take off shirt" },
-  { option: "do nothing for 1 minute" },
-  { option: "discord call 1 min" },
-  { option: "fit check" },
-  { option: "mute mic 1 min" },
-  { option: "follow back on twitter" },
-  { option: "respin" },
-  { option: "coin flip gamba" },
-  { option: "gift a sub" },
-  { option: "tweet" },
-  { option: "csgo case" },
-  { option: "guide the raid" },
-  { option: "twerk" },
-  { option: "timeout 10 mins" },
-  { option: "Watch a 10 minute youtube video" },
-];
+// const dataOTHER: WheelData[] = [
+//   { option: "10 squats" },
+//   { option: "25 pushups" },
+//   { option: "no laugh 5 min" },
+//   { option: "clown wig" },
+//   { option: "geoguesser round" },
+//   { option: "add/remove vip(temporary)" },
+//   { option: "stanky leg" },
+//   { option: "rave" },
+//   { option: "take a shot" },
+//   { option: "stare" },
+//   { option: "mute mic 5 mins" },
+//   { option: "oversaturated cam 10 minutes" },
+//   { option: "lay down for 5 minutes" },
+//   { option: "5 minutes of youtube kids" },
+//   { option: "scream your name" },
+//   { option: "shit mic" },
+//   { option: "scammed" },
+//   { option: "take off shirt" },
+//   { option: "do nothing for 1 minute" },
+//   { option: "discord call 1 min" },
+//   { option: "fit check" },
+//   { option: "mute mic 1 min" },
+//   { option: "follow back on twitter" },
+//   { option: "respin" },
+//   { option: "coin flip gamba" },
+//   { option: "gift a sub" },
+//   { option: "tweet" },
+//   { option: "csgo case" },
+//   { option: "guide the raid" },
+//   { option: "twerk" },
+//   { option: "timeout 10 mins" },
+//   { option: "Watch a 10 minute youtube video" },
+// ];
 const dataIRL: WheelData[] = [
-  {
-    option: "pretend it's my birthday next meal",
-  },
-  { option: "Dance in Public" },
-  { option: "Be a statue for 1 minute" },
-  { option: "Fist bump a stranger" },
+  { option: "Dance in public" },
+  { option: "Be a statue for 1 min" },
+  { option: "Fist Bump a Stranger" },
   { option: "Do 50 jumping jacks" },
   { option: "Give someone a high five" },
-  { option: "30 second plank" },
+  { option: "30 second Plank" },
   { option: "Party Hips" },
-  { option: "iSpy" },
   { option: "5 Pushups" },
   {
-    option: "Face Cam only for 5 mins",
+    option: "Face cam only for 5 mins",
   },
   {
     option: "Enter the Nearest Establishment",
@@ -91,10 +86,9 @@ const dataIRL: WheelData[] = [
   { option: "Scammed Unfortunately" },
   { option: "Say Hello to a Stranger" },
   { option: "Compliment a Stranger" },
-  { option: "Play Mermaid Party" },
   { option: "Cartwheel" },
   {
-    option: "Consistent Awkward Laugh (10 mins)",
+    option: "Consistent Awkward Laugh (5 mins)",
   },
   { option: "Clap" },
   { option: "Touch Grass" },
@@ -106,7 +100,6 @@ interface WheelOption {
   style?: {
     backgroundColor?: string;
     fontSize?: number;
-    // Add other style properties as needed
   };
 }
 
@@ -171,8 +164,9 @@ const Home: NextPage<{
   const [mustSpin, setMustSpin] = useState(false);
   const [shown, show] = useState(false);
   const [prizeNumber, setPrizeNumber] = useState(0);
+  const prizeNumberQueueRef = useRef<number[]>([]);
   const _getTTS = api.util.tts.useMutation();
-
+  const spunIds = useRef<string[]>([]);
   const getTTS = async () => {
     const res = await _getTTS.mutateAsync({
       text:
@@ -183,22 +177,40 @@ const Home: NextPage<{
     return res.speak_url;
   };
 
-  const handleSpin = useCallback(() => {
-    if (!mustSpin) {
-      show(true);
-      const audioElement = document.querySelectorAll("audio");
+  const handleSpin = useCallback(
+    (prizeNumber: number) => {
+      console.log("handleSpin");
+      console.log(mustSpin, prizeNumberQueueRef.current.length);
+      if (prizeNumberQueueRef.current.length > 0 || mustSpin) {
+        prizeNumberQueueRef.current = [
+          prizeNumber,
+          ...prizeNumberQueueRef.current,
+        ];
+        console.log("pushed prizeNumber", prizeNumberQueueRef.current);
+      } else if (!mustSpin) {
+        if (prizeNumberQueueRef.current.length)
+          return (prizeNumberQueueRef.current = [
+            prizeNumber,
+            ...prizeNumberQueueRef.current,
+          ]);
+        show(true);
+        setPrizeNumber(prizeNumber);
+        const audioElement = document.querySelectorAll("audio");
 
-      setTimeout(() => {
-        if (audioElement[0]) {
-          audioElement[0].volume = 0.5;
-          void audioElement[0].play();
-        }
-        setMustSpin(true);
-      }, 500);
-    }
-  }, [mustSpin]);
+        setTimeout(() => {
+          if (audioElement[0]) {
+            audioElement[0].volume = 0.5;
+            void audioElement[0].play();
+          }
+          setMustSpin(true);
+        }, 500);
+      }
+    },
+    [mustSpin, prizeNumberQueueRef],
+  );
 
   useEffect(() => {
+    if (!streamer) return;
     const pusher = new Pusher(SOKETI_KEY, {
       wsHost: SOKETI_URL,
       wsPort: 443,
@@ -209,14 +221,38 @@ const Home: NextPage<{
 
     const channel = pusher.subscribe(String(streamer).toLowerCase());
     if (ENV == "development") {
-      show(true);
+      // show(true);
     }
-    channel.bind("spin", (d: { rand: number }) => {
+    channel.bind("spin", (d: { rand: number; id: string }) => {
+      if (d.id) {
+        console.log("id", d.id);
+        if (spunIds.current.some((id) => id === d.id)) return;
+        spunIds.current.push(d.id);
+        if (spunIds.current.length > 10) spunIds.current.shift();
+      }
+      console.log(spunIds.current);
       const newPrizeNumber = Math.floor(d.rand * data.length);
-      setPrizeNumber(newPrizeNumber);
-      handleSpin();
+      handleSpin(newPrizeNumber);
     });
+
+    return () => {
+      pusher.disconnect();
+    };
   }, [SOKETI_KEY, SOKETI_URL, streamer, ENV, handleSpin]);
+
+  useEffect(() => {
+    let timer: string | number | NodeJS.Timeout | undefined;
+    if (mustSpin) {
+      show(true);
+    } else
+      timer = setTimeout(() => {
+        show(false);
+      }, 6000);
+
+    // Clear the timer on component unmount or when count changes (if needed)
+    return () => clearTimeout(timer);
+  }, [mustSpin]);
+
   return (
     <main className="m-0 flex h-screen place-content-end items-end justify-end">
       <style jsx global>{`
@@ -237,7 +273,7 @@ const Home: NextPage<{
         /> */}
 
         <div
-          className={`transition-opacity ${
+          className={`transition-opacity duration-500 ${
             shown ? "opacity-100" : "opacity-0"
           }`}
         >
@@ -256,7 +292,7 @@ const Home: NextPage<{
                 height={100}
                 className="absolute z-30 h-[auto] w-[10rem] translate-x-[19rem] translate-y-[-9.2rem] -rotate-[25deg]"
                 src="/mac-pointer-arm.png"
-                onClick={handleSpin}
+                // onClick={handleSpin}
               />
             </>
           )}
@@ -271,12 +307,31 @@ const Home: NextPage<{
                 const audioElement = document.querySelectorAll("audio");
                 if (audioElement[1]) {
                   audioElement[1].src = tts;
-                }
-                void audioElement[1]?.play();
-                if (ENV != "development") {
-                  setTimeout(() => {
-                    show(false);
-                  }, 10000);
+                  void audioElement[1].play();
+
+                  if (audioElement[0]) {
+                    audioElement[0].volume = 0.5;
+                    audioElement[1].onended = () => {
+                      const tempQueueCopy = [...prizeNumberQueueRef.current];
+                      const newPrize = tempQueueCopy.pop();
+                      prizeNumberQueueRef.current = tempQueueCopy;
+                      console.log("onStopSpin newPrize", newPrize);
+                      console.log(
+                        "onStopSpin prizeNumberQueueRef",
+                        prizeNumberQueueRef.current,
+                      );
+                      if (newPrize !== undefined) {
+                        setPrizeNumber(newPrize);
+                        show(true);
+
+                        setTimeout(() => {
+                          void audioElement[0]?.play();
+                          setMustSpin(true);
+                          show(true);
+                        }, 400);
+                      }
+                    };
+                  }
                 }
               });
             }}

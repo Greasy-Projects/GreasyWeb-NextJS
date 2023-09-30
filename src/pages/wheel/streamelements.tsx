@@ -1,8 +1,5 @@
 import { type NextPage } from "next";
-import { useRouter } from "next/router";
-import Head from "next/head";
 import { api } from "~/utils/api";
-import { LoaderPage } from "~/components/loading";
 import { LoginPage } from "~/components/login";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
@@ -60,11 +57,10 @@ interface ClientToServerEvents {
 }
 
 const Home: NextPage = () => {
-  const router = useRouter();
-  const streamer = String(router.query.streamer);
   const { data: session, status } = useSession();
   const tipSpin = api.wheel.tipSpin.useMutation();
-  const { data: SEJWT } = api.user.getSEJWT.useQuery();
+  const getSEJWT = api.user.getSEJWT.useQuery();
+  const SEJWT = getSEJWT.data;
   const [connected, setConnected] = useState(false);
   const [authorized, setAuthorized] = useState(true);
   const [pageVisible, setPageVisible] = useState(true);
@@ -98,7 +94,6 @@ const Home: NextPage = () => {
   useEffect(() => {
     if (SEJWT == undefined) return;
     const jwt = String(SEJWT);
-    if (connected) return;
     const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
       "https://realtime.streamelements.com",
       {
@@ -113,25 +108,25 @@ const Home: NextPage = () => {
 
     socket.on("event", (data) => {
       if (data.provider !== "twitch" || data.type !== "tip") return;
-      tipSpin.mutate({ amount: data.data.amount });
+      tipSpin.mutate({ amount: data.data.amount, id: data.activityId });
       console.log("event", data);
     });
 
     function onConnect() {
-      if (connected) socket.disconnect();
-      setConnected(true);
+      // setConnected(true);
       console.log("Successfully connected to the websocket");
       socket.emit("authenticate", { method: "jwt", token: jwt });
     }
 
     function onDisconnect() {
       setConnected(false);
-
       console.log("Disconnected from websocket");
     }
 
     async function onAuthenticated(data: { channelId: string }) {
+      setConnected(true);
       setAuthorized(true);
+
       console.log(data);
       const { channelId } = data;
       const url = "https://api.streamelements.com/kappa/v2/channels/me";
@@ -157,7 +152,12 @@ const Home: NextPage = () => {
       setAuthorized(false);
       console.error(err);
     }
-  }, [connected, SEJWT]);
+
+    return () => {
+      socket.disconnect();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [SEJWT]);
   if (status === "loading") {
     return <></>;
   }
