@@ -14,11 +14,12 @@ const Home: NextPage = () => {
   const streamer = String(router.query.streamer);
   const { data: session, status } = useSession();
   const manualSpin = api.util.manualSpin.useMutation();
-  const { data: managers } = api.user.getManagers.useQuery({
-    streamer: streamer,
-  });
+  const { data: managers, isLoading: isGettingManagers } =
+    api.user.getManagers.useQuery({
+      streamer: streamer,
+    });
 
-  if (status === "loading" || !managers) {
+  if (status === "loading" || isGettingManagers) {
     return (
       <>
         <LoaderPage />
@@ -31,7 +32,7 @@ const Home: NextPage = () => {
         <LoginPage title="sub wheel" />
       </>
     );
-  } else if (session != undefined && managers) {
+  } else if (session != undefined && managers !== undefined) {
     if (
       streamer.toLowerCase() !== session.user.name?.toLowerCase() &&
       !managers?.managers?.data?.some(

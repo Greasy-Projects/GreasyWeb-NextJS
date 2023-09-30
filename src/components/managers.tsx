@@ -11,7 +11,6 @@ export const ManagersComponent: React.FC<{
   const [managers, managersQuery] = api.user.getManagers.useSuspenseQuery({
     streamer: streamer,
   });
-  if (!managers.managers.data) return <></>;
   streamer = streamer.toLowerCase();
   user = user.toLowerCase();
   return (
@@ -27,6 +26,11 @@ export const ManagersComponent: React.FC<{
             }
           `}</style>
           <ScrollContainer className="scroll-container code relative flex w-52 space-x-2 !overflow-x-scroll p-1">
+            {!managers?.managers && (
+              <code className={"green code flex-shrink-0 px-1 py-0 text-base"}>
+                {streamer}
+              </code>
+            )}
             {managers?.managers?.data.map((d, i) => {
               return (
                 <code
